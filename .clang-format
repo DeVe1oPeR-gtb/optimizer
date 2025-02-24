@@ -1,0 +1,10 @@
+BasedOnStyle: LLVM
+IndentWidth: 4          # インデント幅を4スペースに設定
+BreakBeforeBraces: Attach  # { を前の行に配置
+ColumnLimit: 72        # 1行の最大長を110文字に設定
+AlignConsecutiveAssignments: true  # = の位置を揃えない
+AlignTrailingComments: true  # コメントの位置をずらさない
+AllowShortFunctionsOnASingleLine: None  # 短い関数を1行にしない
+BreakBeforeFunctionDefinition: Always   # 関数定義を必ず新しい行から開始
+BreakBeforeBinaryOperators: AlignAfterOperator  # 演算子を揃える
+
