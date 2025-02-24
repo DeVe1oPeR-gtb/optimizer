@@ -20,13 +20,13 @@ enum {
     N_DIM      = 4, // 次元
     N_PARTICLE = 10 // 粒子数
 };
-std::vector<double> ll_bnd(N_DIM, 5.0);
+std::vector<double> ll_bnd(N_DIM, 0.0);
 std::vector<double> ul_bnd(N_DIM, 200.0);
-std::vector<double> ll_ini_bnd(N_DIM, 0.0);
+std::vector<double> ll_ini_bnd(N_DIM, 0.1);
 std::vector<double> ul_ini_bnd(N_DIM, 100.0);
 
 TEST_GROUP(PSO_SOT) {
-    PSO *pso;
+    PSO<double> *pso;
     void setup() {
         std::vector<double> w(N_DIM, 0.7);
         std::vector<double> c1(N_DIM, 2.0);
@@ -39,23 +39,23 @@ TEST_GROUP(PSO_SOT) {
 };
 
 TEST_GROUP(PSO_AOT) {
-    PSO *pso;
+    PSO<double> *pso;
     void setup() {}
     void teardown() { delete pso; }
 };
 
 TEST(PSO_SOT, Create) {
-    std::vector<PSO::Particle> particles = pso->getParticles();
+    std::vector<PSO<double>::Particle> particles = pso->getParticles();
     LONGS_EQUAL(N_PARTICLE, particles.size());
 }
 
-bool areParticlesEqual(const PSO::Particle &, const PSO::Particle &);
+bool areParticlesEqual(const PSO<double>::Particle &, const PSO<double>::Particle &);
 TEST(PSO_SOT, Initial) {
-    std::vector<PSO::Particle> particles = pso->getParticles();
+    std::vector<PSO<double>::Particle> particles = pso->getParticles();
     LONGS_EQUAL(N_PARTICLE, particles.size());
 
     // 初期化前の粒子の状態を保存
-    std::vector<PSO::Particle> init_particles = particles;
+    std::vector<PSO<double>::Particle> init_particles = particles;
 
     // 粒子を初期化
     pso->initParticles(ul_ini_bnd, ll_ini_bnd);
@@ -70,7 +70,7 @@ TEST(PSO_SOT, Initial) {
     for (int i = 0; i < N_PARTICLE; ++i) {
         for (int j = 0; j < N_DIM; ++j) {
             if (ll_bnd[j] > particles[i].position[j] || ul_bnd[j] < particles[i].position[j]) {
-                result = false;
+                result2 = false;
             }
         }
     }
@@ -78,7 +78,7 @@ TEST(PSO_SOT, Initial) {
 }
 
 TEST(PSO_SOT, Pbest) {
-    std::vector<PSO::Particle> particles(N_PARTICLE);
+    std::vector<PSO<double>::Particle> particles(N_PARTICLE);
 
     std::vector<double> pos(N_DIM, 2.0);
     std::vector<double> vel(N_DIM, 1.0);
@@ -91,7 +91,7 @@ TEST(PSO_SOT, Pbest) {
 
     // pso->setParticles(positions,velocities);
     pso->setEvalData(0, eval_data);
-    Optimizer::Stats stats = pso->calcPersonalScore(0);
+    Optimizer::Stats<double> stats = pso->calcPersonalScore(0);
     DOUBLES_EQUAL(-1.0, stats.mean, 1.0e-9);
 
     pso->updatePersonalBest(0, stats.mean);
@@ -103,8 +103,8 @@ TEST(PSO_SOT, UpdateGbest) {
     std::mt19937 rng(std::random_device{}());
     std::uniform_real_distribution<double> dist(-10.0, 10.0);
 
-    PSO::Gbest gbest;
-    std::vector<PSO::Particle> particles(N_PARTICLE);
+    PSO<double>::Gbest gbest;
+    std::vector<PSO<double>::Particle> particles(N_PARTICLE);
     std::vector<double> pos(N_DIM, 0.0);
     std::vector<double> vel(N_DIM, 0.0);
     std::vector<std::vector<double>> positions(N_PARTICLE, pos);
@@ -213,11 +213,11 @@ TEST(PSO_AOT, DEMO) {
 
     pso = new PSO(NR, NM, w, c1, c2, ll_bnd2, ul_bnd2);
     pso->initParticles(ll_ini_bnd2, ul_ini_bnd2);
-    const std::vector<PSO::Particle> &particles = pso->getParticles();
+    const std::vector<PSO<double>::Particle> &particles = pso->getParticles();
 
     srand(0u);
 
-    PSO::Gbest gb;
+    PSO<double>::Gbest gb;
     for (int ik = 0; ik < NUMAX; ++ik) {  // 更新回数ループ
         for (int ip = 0; ip < NR; ++ip) { // 粒子数ループ
             // 目的関数の計算
@@ -235,7 +235,7 @@ TEST(PSO_AOT, DEMO) {
                 eval_data[i] = std::make_pair(fz[i], y[i]);
             }
             pso->setEvalData(ip, eval_data);
-            Optimizer::Stats stats = pso->calcPersonalScore(ip);
+            Optimizer::Stats<double> stats = pso->calcPersonalScore(ip);
             pso->updatePersonalBest(ip, stats.rmse);
         }
         pso->updateGlobalBest();
@@ -337,7 +337,7 @@ TEST(PSO_AOT, DEMO) {
 //     return CommandLineTestRunner::RunAllTests(argc, argv);
 // }
 
-bool areParticlesEqual(const PSO::Particle &p1, const PSO::Particle &p2) {
+bool areParticlesEqual(const PSO<double>::Particle &p1, const PSO<double>::Particle &p2) {
     return p1.position == p2.position && p1.velocity == p2.velocity && p1.best_position == p2.best_position &&
            std::fabs(p1.best_score - p2.best_score) < 1e-9;
 }

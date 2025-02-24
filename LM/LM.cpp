@@ -35,7 +35,7 @@ void LM<T>::setJacobian(const int& idx_param, const std::vector<T>& dfdz){
 }
 
 template <typename T>
-void LM<T>::setEvalData(const std::vector<std::pair<double,double>>& eval_data){
+void LM<T>::setEvalData(const std::vector<std::pair<T,T>>& eval_data){
     eval_data_ = eval_data;
     return;
 }
@@ -50,7 +50,7 @@ const std::vector<T>& LM<T>::getDelta(){
     return delta_;
 }
 
-// レーヴェンバーグマルカート法
+//  Levenberg-Marquardt method（レーヴェンバーグ・マルカート法）
 template <typename T>
 const std::vector<T>& LM<T>::getNextDelta(){
     // 初期化
@@ -78,7 +78,7 @@ const std::vector<T>& LM<T>::getNextDelta(){
 }
 
 template <typename T>
-const Optimizer::Stats& LM<T>::getStats() {
+const Optimizer::Stats<T>& LM<T>::getStats() {
     stats_ = Optimizer::computeStats(eval_data_);
     return stats_;
 }

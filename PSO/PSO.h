@@ -9,39 +9,37 @@
 #include <utility>
 #include <vector>
 
+template <typename T>
 class PSO : public Optimizer {
   public:
     struct Particle {
-        std::vector<double> position;
-        std::vector<double> velocity;
-        std::vector<double> best_position;
-        double my_score;
-        double best_score;
-        std::vector<std::pair<double, double>> eval_data;
-        Optimizer::Stats my_stats;
-        Optimizer::Stats best_stats;
+        std::vector<T> position;
+        std::vector<T> velocity;
+        std::vector<T> best_position;
+        T my_score;
+        T best_score;
+        std::vector<std::pair<T, T>> eval_data;
+        typename Optimizer::Stats<T> my_stats;
+        typename Optimizer::Stats<T> best_stats;
         int no;
     };
 
     struct Gbest {
         int num_particle;
-        std::vector<double> position;
-        double score;
-        Optimizer::Stats stats;
+        std::vector<T> position;
+        T score;
+        typename Optimizer::Stats<T> stats;
     };
 
-    explicit PSO(int, int, std::vector<double>, std::vector<double>, std::vector<double>, std::vector<double>,
-                 std::vector<double>
-                 // std::vector<double>, std::vector<double>
-    );
+    explicit PSO(int, int, std::vector<T>, std::vector<T>, std::vector<T>, std::vector<T>, std::vector<T>);
     virtual ~PSO();
 
     const std::vector<Particle> &getParticles();
-    void setParticles(const std::vector<std::vector<double>> &, const std::vector<std::vector<double>> &);
-    void initParticles(const std::vector<double> &, const std::vector<double> &);
-    void setEvalData(const int &, const std::vector<std::pair<double, double>> &);
-    Optimizer::Stats calcPersonalScore(const int &);
-    void updatePersonalBest(const int &, const double &);
+    void setParticles(const std::vector<std::vector<T>> &, const std::vector<std::vector<T>> &);
+    void initParticles(const std::vector<T> &, const std::vector<T> &);
+    void setEvalData(const int &, const std::vector<std::pair<T, T>> &);
+    typename Optimizer::Stats<T> calcPersonalScore(const int &);
+    void updatePersonalBest(const int &, const T &);
     void updateGlobalBest();
     const Gbest &getGlobalBest();
     void updateParticles();
@@ -50,16 +48,14 @@ class PSO : public Optimizer {
     std::vector<Particle> particles_;
     Gbest gbest_;
     int num_dim_;
-    std::vector<double> w_;  // 慣性
-    std::vector<double> c1_; // Pbest重み
-    std::vector<double> c2_; // Gbest重み
+    std::vector<T> w_;  // 慣性
+    std::vector<T> c1_; // Pbest重み
+    std::vector<T> c2_; // Gbest重み
 
     std::mt19937 rng_;
-    std::vector<double> ul_bound_;
-    std::vector<double> ll_bound_;
-    // std::vector<double> ul_ini_bound_;
-    // std::vector<double> ll_ini_bound_;
+    std::vector<T> ul_bound_;
+    std::vector<T> ll_bound_;
     void printParticles(int);
 };
 
-#endif
+#endif // D_PSO_H
