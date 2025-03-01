@@ -17,6 +17,7 @@ set(ROOT_DIR ${CMAKE_SOURCE_DIR})
 set(OPTIMIZER_DIR ${ROOT_DIR}/Optimizer)
 set(PSO_DIR ${ROOT_DIR}/PSO)
 set(LM_DIR ${ROOT_DIR}/LM)
+set(DE_DIR ${ROOT_DIR}/DE)
 set(UTIL_DIR ${ROOT_DIR}/util)  # util フォルダを追加
 
 # 追加インクルード
@@ -38,6 +39,12 @@ file(GLOB LM_SOURCES ${LM_DIR}/*.cpp)
 add_library(LM STATIC ${LM_SOURCES})
 target_include_directories(LM PUBLIC ${LM_DIR})
 target_link_libraries(LM PUBLIC Optimizer)
+
+# DE モジュール（Optimizer を使用）
+file(GLOB DE_SOURCES ${DE_DIR}/*.cpp)
+add_library(DE STATIC ${DE_SOURCES})
+target_include_directories(DE PUBLIC ${DE_DIR})
+target_link_libraries(DE PUBLIC Optimizer)
 
 # テスト用実行ファイル
 add_executable(AllTests AllTests.cpp)

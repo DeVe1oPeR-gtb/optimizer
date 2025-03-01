@@ -91,27 +91,27 @@ TEST(LM_AOT, DEMO) {
         double rmse = levm->getStats().rmse;
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
-        if(ik == 0){
-            cout << endl;
-            cout << std::setprecision(1);
-            cout << std::setw(8) << "update";
-            cout << std::setw(8) << "ave";
-            cout << std::setw(8) << "sig";
-            cout << std::setw(8) << "RMSE";
-            cout <<"   ﾊﾟﾗﾒｰﾀ 1～6"<< endl;
-        }
-////////////////////////////////////////////////////////////////////////
-        cout << std::setw(8) << ik+1;
-        cout << std::right << std::fixed;
-        cout << std::setw(8) << mean;
-        cout << std::setw(8) << std;
-        cout << std::setw(8) << rmse;
+//         if(ik == 0){
+//             cout << endl;
+//             cout << std::setprecision(1);
+//             cout << std::setw(8) << "update";
+//             cout << std::setw(8) << "ave";
+//             cout << std::setw(8) << "sig";
+//             cout << std::setw(8) << "RMSE";
+//             cout <<"   ﾊﾟﾗﾒｰﾀ 1～6"<< endl;
+//         }
+// ////////////////////////////////////////////////////////////////////////
+//         cout << std::setw(8) << ik+1;
+//         cout << std::right << std::fixed;
+//         cout << std::setw(8) << mean;
+//         cout << std::setw(8) << std;
+//         cout << std::setw(8) << rmse;
 
-        for(int i = NM-1; i >= 0; --i ) {
-        // cout << std::scientific;
-            cout << std::setprecision(3) << std::setw(10) << z[i];
-        }
-        cout << endl;
+//         for(int i = NM-1; i >= 0; --i ) {
+//         // cout << std::scientific;
+//             cout << std::setprecision(3) << std::setw(10) << z[i];
+//         }
+//         cout << endl;
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
         
