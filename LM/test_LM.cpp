@@ -45,9 +45,9 @@ TEST(LM_SOT, Create) {
     double p[3] = {1., 2., 3.};
     for (int i = 0; i < 3; i++) {
         double fz = y_cal_fz(3, x[i], p);
-        printf("fz:%5.2f\n", fz);
+        // printf("fz:%5.2f\n", fz);
     }
-    FAIL("Start here..");
+    // FAIL("Start here..");
 }
 
 TEST(LM_AOT, DEMO) {

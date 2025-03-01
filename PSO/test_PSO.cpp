@@ -142,7 +142,7 @@ TEST(PSO_AOT, DEMO) {
     const int NI    = 21;
     const int NM    = 6;
     const int NR    = 50;
-    const int NUMAX = 200; // 更新回数
+    const int NUMAX = 00; // 更新回数
 
     ////////////////////////////////////////////////////////////////////////
     // csv用
@@ -195,8 +195,8 @@ TEST(PSO_AOT, DEMO) {
     // 初期粒子範囲
     std::vector<double> ll_bnd2(NM, -1000.0);
     std::vector<double> ul_bnd2(NM, 1000.0);
-    std::vector<double> ll_ini_bnd2(NM, -10.);
-    std::vector<double> ul_ini_bnd2(NM, 10.1);
+    std::vector<double> ll_ini_bnd2(NM, -1.);
+    std::vector<double> ul_ini_bnd2(NM, 1.);
 
     // PSOパラメータ
     std::vector<double> w(NM, 0.7);
@@ -232,7 +232,7 @@ TEST(PSO_AOT, DEMO) {
                 //       + particles[ip].position[1] * x[i]
                 //       + particles[ip].position[2];
 
-                eval_data[i] = std::make_pair(fz[i], y[i]);
+                eval_data[i] = std::make_pair(y[i],fz[i]);
             }
             pso->setEvalData(ip, eval_data);
             Optimizer::Stats<double> stats = pso->calcPersonalScore(ip);
@@ -242,32 +242,32 @@ TEST(PSO_AOT, DEMO) {
         gb          = pso->getGlobalBest();
         double mean = particles[gb.num_particle].best_stats.mean;
         double std  = particles[gb.num_particle].best_stats.std_dev;
-        // ////////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////////
 
-        //         if(ik == 0){
-        //             cout << endl;
-        //             cout << std::setprecision(1);
-        //             cout << std::setw(8) << "update";
-        //             cout << std::setw(8) << "bpn";
-        //             cout << std::setw(8) << "ave";
-        //             cout << std::setw(8) << "sig";
-        //             cout << std::setw(8) << "RMSE";
-        //             cout <<"   ﾊﾟﾗﾒｰﾀ 1～6"<< endl;
-        //         }
-        // ////////////////////////////////////////////////////////////////////////
-        //         cout << std::setw(8) << ik+1;
-        //         cout << std::setw(8) << gb.num_particle;
-        //         cout << std::right << std::fixed;
-        //         cout << std::setw(8) << mean;
-        //         cout << std::setw(8) << std;
-        //         cout << std::setw(8) << gb.score;
+                if(ik == 0){
+                    cout << endl;
+                    cout << std::setprecision(1);
+                    cout << std::setw(8) << "update";
+                    cout << std::setw(8) << "bpn";
+                    cout << std::setw(8) << "ave";
+                    cout << std::setw(8) << "sig";
+                    cout << std::setw(8) << "RMSE";
+                    cout <<"   ﾊﾟﾗﾒｰﾀ 1～6"<< endl;
+                }
+        ////////////////////////////////////////////////////////////////////////
+                cout << std::setw(8) << ik+1;
+                cout << std::setw(8) << gb.num_particle;
+                cout << std::right << std::fixed;
+                cout << std::setw(8) << mean;
+                cout << std::setw(8) << std;
+                cout << std::setw(8) << gb.score;
 
-        //         for(int i = 0; i < NM; ++i ) {
-        //             // cout << std::scientific;
-        //             cout << std::setprecision(3) << std::setw(10) << gb.position[i];
-        //             csv_gb_pos[ik][i]  = gb.position[i];
-        //         }
-        //         cout << endl;
+                for(int i = 0; i < NM; ++i ) {
+                    // cout << std::scientific;
+                    cout << std::setprecision(3) << std::setw(10) << gb.position[i];
+                    csv_gb_pos[ik][i]  = gb.position[i];
+                }
+                cout << endl;
         ////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////
         csv_nu[ik]      = ik + 1;

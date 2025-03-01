@@ -1,0 +1,4 @@
+This project includes software developed by third parties:
+
+- nlohmann-json (https://github.com/nlohmann/json)
+  Licensed under the MIT License.
