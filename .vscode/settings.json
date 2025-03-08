@@ -90,5 +90,8 @@
     "C_Cpp.default.includePath": [
         "util",
         "Optimizer"
-    ]
+    ],
+    "files.watcherExclude": {
+        "**/target": true
+    }
 }

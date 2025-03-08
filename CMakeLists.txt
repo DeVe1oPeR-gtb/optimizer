@@ -48,5 +48,5 @@ target_link_libraries(DE PUBLIC Optimizer)
 
 # テスト用実行ファイル
 add_executable(AllTests AllTests.cpp)
-target_link_libraries(AllTests PRIVATE PSO LM CppUTest CppUTestExt)
+target_link_libraries(AllTests PRIVATE PSO LM DE CppUTest CppUTestExt)
 # target_link_libraries(AllTests PRIVATE PSO CppUTest CppUTestExt)

@@ -18,13 +18,17 @@ class DE : public Optimizer {
     virtual ~DE();
 
     const std::vector<Individual> &getPopulation();
+    const std::vector<Individual> &getMutants();
     void initPopulation(const std::vector<T> &, const std::vector<T> &);
     void setEvalData(const int &, const std::vector<std::pair<T, T>> &);
     typename Optimizer::Stats<T> calcScore(const int &);
-    void updatePopulation();
+    void mutation();
+    void selection();
+    
 
   private:
-    std::vector<Individual> population_;
+    std::vector<Individual> population_; // 個体集団
+    std::vector<Individual> mutants_;  // 変異個体集団
     int num_dim_;
     T F_; // 変異係数
     T CR_; // 交叉率
