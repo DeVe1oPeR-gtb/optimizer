@@ -20,10 +20,10 @@ enum {
     N_DIM      = 4, // 次元
     N_PARTICLE = 10 // 粒子数
 };
-std::vector<double> ll_bnd(N_DIM, 0.0);
-std::vector<double> ul_bnd(N_DIM, 200.0);
+std::vector<double> ll_bnd(N_DIM, -1000.0);
+std::vector<double> ul_bnd(N_DIM, 1000.0);
 std::vector<double> ll_ini_bnd(N_DIM, 0.1);
-std::vector<double> ul_ini_bnd(N_DIM, 100.0);
+std::vector<double> ul_ini_bnd(N_DIM, 0.1);
 
 TEST_GROUP(PSO_SOT) {
     PSO<double> *pso;

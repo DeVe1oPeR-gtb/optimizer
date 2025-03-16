@@ -12,10 +12,10 @@ enum {
     N_DIM      = 4,
     N_POPULATION = 10
 };
-std::vector<double> ll_bnd_de(N_DIM, 0.0);
-std::vector<double> ul_bnd_de(N_DIM, 200.0);
+std::vector<double> ll_bnd_de(N_DIM, -1000.0);
+std::vector<double> ul_bnd_de(N_DIM, 1000.0);
 std::vector<double> ll_ini_bnd_de(N_DIM, 0.1);
-std::vector<double> ul_ini_bnd_de(N_DIM, 100.0);
+std::vector<double> ul_ini_bnd_de(N_DIM, 0.1);
 
 TEST_GROUP(DE_SOT) {
     DE<double> *de;
