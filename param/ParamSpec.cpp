@@ -1,3 +1,8 @@
+/**
+ * @file ParamSpec.cpp
+ * @brief パラメータ設定のヘルパ（init_mode 文字列のパース）
+ */
+
 #include "ParamSpec.h"
 #include <algorithm>
 #include <cctype>

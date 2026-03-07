@@ -1,6 +1,11 @@
 #ifndef OPTIMIZER_UTIL_COIL_LIST_H
 #define OPTIMIZER_UTIL_COIL_LIST_H
 
+/**
+ * @file CoilList.h
+ * @brief コイル 1 件の情報（CoilEntry）と、xcoil.txt からリストを読み込む loadCoilListFromFile。
+ */
+
 #include <string>
 #include <vector>
 

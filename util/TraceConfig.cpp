@@ -1,3 +1,8 @@
+/**
+ * @file TraceConfig.cpp
+ * @brief 開発者用設定の読込（trace=on/off, optimizer=..., lm_apply_bounds=on/off）。key=val 形式。
+ */
+
 #include "util/TraceConfig.h"
 #include <fstream>
 #include <sstream>

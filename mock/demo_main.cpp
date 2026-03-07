@@ -86,6 +86,7 @@ int main() {
                 "バイナリ存在: " + std::to_string(existsCount) + " / " + std::to_string(coils.size())
             };
             optimizer::TerminalMessage::summary("コイルデータ読込概要", lines);
+            /* USERWORK: ここで全コイルを 1 度読んでそれぞれの製品情報を出力する処理をオンサイトで追加する。 */
         } else {
             optimizer::TerminalMessage::error("xcoil ファイルを開けません: " + xcoilPath);
         }

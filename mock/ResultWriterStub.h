@@ -6,10 +6,10 @@
 namespace optimizer {
 
 /**
- * @brief 結果出力のスタブ（オンサイトで IResultWriter を実装するまでの仮実装）
+ * @brief 結果出力のスタブ（テスト・デモ用）
  *
  * writeApplyOnly / writeAfterOptimization は何も出力しない。
- * 現場では IResultWriter を実装し、ファイル・DB 等に書き出す。
+ * USERWORK: 現場では IResultWriter を実装したクラスに差し替え、ファイル・DB 等に書き出す。
  */
 class ResultWriterStub : public IResultWriter {
 public:

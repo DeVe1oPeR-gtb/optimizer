@@ -1,6 +1,11 @@
 #ifndef OPTIMIZER_UTIL_TERMINAL_MESSAGE_H
 #define OPTIMIZER_UTIL_TERMINAL_MESSAGE_H
 
+/**
+ * @file TerminalMessage.h
+ * @brief ターミナルへのメッセージ出力（info / error / summary）。コイル読込概要表示などに使用。
+ */
+
 #include <string>
 #include <vector>
 

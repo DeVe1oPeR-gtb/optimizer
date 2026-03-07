@@ -1,6 +1,11 @@
 #ifndef OPTIMIZER_PRODUCT_PRODUCT_LOADED_DATA_H
 #define OPTIMIZER_PRODUCT_PRODUCT_LOADED_DATA_H
 
+/**
+ * @file ProductLoadedData.h
+ * @brief 1 製品分のロード済みデータ（実測・位置。残差は measured - predicted）
+ */
+
 #include <vector>
 
 namespace optimizer {

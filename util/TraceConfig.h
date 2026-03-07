@@ -1,6 +1,11 @@
 #ifndef OPTIMIZER_UTIL_TRACE_CONFIG_H
 #define OPTIMIZER_UTIL_TRACE_CONFIG_H
 
+/**
+ * @file TraceConfig.h
+ * @brief 開発者用設定（trace, optimizer, lm_apply_bounds）の読込と取得。
+ */
+
 #include "util/RunConfig.h"
 #include <iosfwd>
 #include <string>
@@ -11,7 +16,7 @@ namespace optimizer {
 /**
  * @brief 開発者用設定の読込
  *
- * config/developer.cfg を読み、trace=on|off と optimizer=PSO,DE,LM を解釈する。
+ * config/developer.cfg を読み、trace=on|off, optimizer=PSO,DE,LM, lm_apply_bounds=on|off を解釈する。
  * RunConfig を渡せばファイルに依存せず設定を注入できる。
  */
 class TraceConfig {

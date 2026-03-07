@@ -18,6 +18,7 @@ public:
 
     /**
      * @brief 指定製品のデータをロードする
+     * USERWORK: コイルごとにバイナリを再ロードする等、現場の読込仕様で実装する。
      * @param meta 製品メタ（ID・パス等）
      * @return ロード済みデータ。失敗時は nullptr
      */

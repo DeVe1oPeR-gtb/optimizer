@@ -1,3 +1,8 @@
+/**
+ * @file ProductRunner.cpp
+ * @brief 1 製品の評価: データ読込 → モデル実行 → 残差ブロック作成（対象外インデックスは除く）
+ */
+
 #include "product/ProductRunner.h"
 
 namespace optimizer {
@@ -10,7 +15,7 @@ ProductResidualBlock ProductRunner::run(const ProductMeta& meta,
     ProductResidualBlock block;
     block.product_id = meta.product_id;
 
-    /* USERWORK: 実際の製品バイナリファイル読込処理は loader_ の実装で差し替える */
+    /* USERWORK: 実際の製品バイナリファイル読込処理は loader_ の実装で差し替える。コイルごとに再ロードすること。 */
     std::unique_ptr<ProductLoadedData> data = loader_->load(meta);
     if (!data || data->measured.empty()) {
         block.ok = false;
@@ -27,6 +32,7 @@ ProductResidualBlock ProductRunner::run(const ProductMeta& meta,
         return block;
     }
 
+    /* 対象外データ点（excluded_data_indices）は残差に含めず、最適化の目的関数に寄与しない。 */
     const size_t n = data->measured.size();
     auto isExcluded = [&meta](size_t i) {
         for (size_t e : meta.excluded_data_indices)

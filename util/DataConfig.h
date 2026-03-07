@@ -1,6 +1,11 @@
 #ifndef OPTIMIZER_UTIL_DATA_CONFIG_H
 #define OPTIMIZER_UTIL_DATA_CONFIG_H
 
+/**
+ * @file DataConfig.h
+ * @brief コイルデータ用設定（xcoil_file, data_path, binary_struct）を developer.cfg から読む。
+ */
+
 #include <string>
 
 namespace optimizer {

@@ -1,3 +1,8 @@
+/**
+ * @file IterationLog.cpp
+ * @brief 最適化の反復ログをターミナルに出力するヘルパ（iter, score, position）。
+ */
+
 #include "util/IterationLog.h"
 #include <iostream>
 

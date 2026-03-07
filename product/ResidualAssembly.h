@@ -1,6 +1,11 @@
 #ifndef OPTIMIZER_PRODUCT_RESIDUAL_ASSEMBLY_H
 #define OPTIMIZER_PRODUCT_RESIDUAL_ASSEMBLY_H
 
+/**
+ * @file ResidualAssembly.h
+ * @brief 全製品の残差を 1 本に連結したベクトルと、製品ごとのブロック（offset/size）情報
+ */
+
 #include "product/ProductResidualBlock.h"
 #include <vector>
 

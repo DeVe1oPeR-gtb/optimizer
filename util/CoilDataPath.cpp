@@ -1,3 +1,8 @@
+/**
+ * @file CoilDataPath.cpp
+ * @brief コイルバイナリのファイルパス組み立て（コイルNO 6 桁_zero-pad_yyyymmdd.拡張子）と存在チェック。
+ */
+
 #include "util/CoilDataPath.h"
 #include <fstream>
 #include <sstream>

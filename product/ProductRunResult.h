@@ -9,7 +9,8 @@ namespace optimizer {
 /**
  * @brief 1製品分の計算結果（実測・予測・残差）
  *
- * 適用値のみの計算や最適化終了後の結果出力で、オンサイトの出力関数に渡す。
+ * IResultWriter::writeApplyOnly / writeAfterOptimization の引数として渡される。
+ * USERWORK: オンサイトの IResultWriter 実装で、この内容を現場仕様の形式で出力する。
  */
 struct ProductRunResult {
     std::string product_id;

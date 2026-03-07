@@ -1,6 +1,11 @@
 #ifndef OPTIMIZER_OBJECTIVE_OBJECTIVE_H
 #define OPTIMIZER_OBJECTIVE_OBJECTIVE_H
 
+/**
+ * @file Objective.h
+ * @brief 目的関数の実装。mapper で最適化ベクトル→全パラメータ、batch で全製品評価。目的値は残差ノルム。
+ */
+
 #include "core/IDifferentiableObjective.h"
 #include "param/ParameterMapper.h"
 #include "product/BatchEvaluationHandler.h"
@@ -11,8 +16,8 @@ namespace optimizer {
 /**
  * @brief ParameterMapper と BatchEvaluationHandler を用いる目的関数
  *
- * evaluate(x): x を全パラメータに展開 → バッチ評価 → 目的値と残差を返す。
- * evaluateWithJacobian(x): 数値微分でヤコビアンを計算。
+ * evaluate(x): x を全パラメータに展開 → バッチ評価 → 目的値（残差ノルム）と残差ベクトルを返す。
+ * evaluateWithJacobian(x): 数値微分でヤコビアンを計算（LM 用）。
  */
 class Objective : public IDifferentiableObjective {
 public:

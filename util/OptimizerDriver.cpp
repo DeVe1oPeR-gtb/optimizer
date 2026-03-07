@@ -1,3 +1,8 @@
+/**
+ * @file OptimizerDriver.cpp
+ * @brief 最適化 1 回分の実行窓口。PSO/DE/LM を分岐し、Objective で評価。resultWriter があれば最適化後に結果出力。
+ */
+
 #include "util/OptimizerDriver.h"
 #include "model/IPhysicalModel.h"
 #include "model/IProductDataLoader.h"
@@ -278,6 +283,7 @@ static RunResult runImpl(ParameterMapper& mapper,
     else
         return result;
 
+    /* USERWORK: resultWriter はオンサイトで IResultWriter を実装したインスタンスを渡す。 */
     if (resultWriter && !result.bestParams.empty()) {
         std::vector<double> fullParams = mapper.expandToFullParameterSet(result.bestParams);
         std::vector<ProductRunResult> presults = computeProductResults(model, loader, products, fullParams);
@@ -314,6 +320,7 @@ RunResult OptimizerDriver::run(const RunConfig& config,
                   config.n_iter_pso, config.n_iter_de, config.n_iter_lm, resultWriter);
 }
 
+/* USERWORK: dbValueProvider で DB から適用値を取得。resultWriter はオンサイト実装で結果を出力する。 */
 void OptimizerDriver::runApplyOnly(ParameterMapper& mapper,
                                     IPhysicalModel& model,
                                     IProductDataLoader& loader,

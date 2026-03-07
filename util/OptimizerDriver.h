@@ -1,6 +1,11 @@
 #ifndef OPTIMIZER_UTIL_OPTIMIZER_DRIVER_H
 #define OPTIMIZER_UTIL_OPTIMIZER_DRIVER_H
 
+/**
+ * @file OptimizerDriver.h
+ * @brief 最適化 1 回分の実行窓口。run(config, mapper, model, loader, products, optimizerName, ...) で PSO/DE/LM を実行。
+ */
+
 #include "param/ParameterMapper.h"
 #include "product/ProductMeta.h"
 #include "util/RunConfig.h"
@@ -14,7 +19,7 @@ class IProductDataLoader;
 class IResultWriter;
 
 /**
- * @brief 1 回分の最適化結果
+ * @brief 1 回分の最適化結果（最良スコアと最良パラメータベクトル）
  */
 struct RunResult {
     double bestScore = 0.0;

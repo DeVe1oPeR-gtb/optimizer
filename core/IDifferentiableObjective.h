@@ -1,6 +1,11 @@
 #ifndef OPTIMIZER_CORE_I_DIFFERENTIABLE_OBJECTIVE_H
 #define OPTIMIZER_CORE_I_DIFFERENTIABLE_OBJECTIVE_H
 
+/**
+ * @file IDifferentiableObjective.h
+ * @brief ヤコビアン付き目的関数インターフェース（Levenberg–Marquardt 用）
+ */
+
 #include "IObjective.h"
 #include "JacobianResult.h"
 #include <vector>
@@ -9,6 +14,9 @@ namespace optimizer {
 
 /**
  * @brief 残差とヤコビアンを返せる目的関数（LM 用）
+ *
+ * evaluateWithJacobian(x) で残差ベクトルと jacobian[残差添字][パラメータ添字] を返す。
+ * 本ライブラリでは Objective が数値微分で実装している。
  */
 class IDifferentiableObjective : public IObjective {
 public:

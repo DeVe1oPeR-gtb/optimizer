@@ -1,6 +1,11 @@
 #ifndef OPTIMIZER_PARAM_PARAM_SPEC_H
 #define OPTIMIZER_PARAM_PARAM_SPEC_H
 
+/**
+ * @file ParamSpec.h
+ * @brief 1 パラメータ分の設定（名前・最適化有無・初期値・上下限・apply_bounds）
+ */
+
 #include <string>
 
 namespace optimizer {

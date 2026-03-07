@@ -1,6 +1,11 @@
 #ifndef OPTIMIZER_UTIL_COIL_DATA_PATH_H
 #define OPTIMIZER_UTIL_COIL_DATA_PATH_H
 
+/**
+ * @file CoilDataPath.h
+ * @brief コイルバイナリのファイルパス組み立て（6桁_yyyymmdd.拡張子）と fileExists。
+ */
+
 #include <string>
 
 namespace optimizer {
