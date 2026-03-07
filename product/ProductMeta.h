@@ -2,6 +2,7 @@
 #define OPTIMIZER_PRODUCT_PRODUCT_META_H
 
 #include <string>
+#include <vector>
 
 namespace optimizer {
 
@@ -13,6 +14,14 @@ namespace optimizer {
 struct ProductMeta {
     std::string product_id;   /**< 製品 ID */
     std::string file_path;   /**< データファイルパス等 */
+
+    /**
+     * @brief 最適化対象から外すデータ点の番号（0 始まりインデックス）
+     *
+     * 非定常部など、ロジックはオンサイトで決定し、ここに対象外のインデックスをセットする。
+     * 空のときは全データ点を対象とする。
+     */
+    std::vector<size_t> excluded_data_indices;
 };
 
 }  // namespace optimizer

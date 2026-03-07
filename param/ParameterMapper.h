@@ -56,6 +56,8 @@ public:
     std::vector<double> getLowerBounds() const;
     /** @brief 最適化ベクトル用の上限 */
     std::vector<double> getUpperBounds() const;
+    /** @brief 各最適化パラメータで上下限を適用するか（getInitialVector と同じ順） */
+    std::vector<bool> getApplyBounds() const;
 
     /**
      * @brief 最適化ベクトルを全パラメータに展開（specs の並び）

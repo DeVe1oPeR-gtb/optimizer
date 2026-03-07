@@ -26,6 +26,7 @@ struct ParamSpec {
     double lower = 0.0;          /**< 下限 */
     double upper = 0.0;          /**< 上限 */
     std::string note;            /**< 備考 */
+    bool apply_bounds = true;    /**< 最適化時に上下限を適用するか */
 
     /** @brief 有効な bounds を持つか（enable 時は別途バリデーション） */
     bool hasBounds() const {

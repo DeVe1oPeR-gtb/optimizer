@@ -61,6 +61,13 @@ std::vector<double> ParameterMapper::getUpperBounds() const {
     return up;
 }
 
+std::vector<bool> ParameterMapper::getApplyBounds() const {
+    std::vector<bool> out(numOptParams());
+    for (size_t k = 0; k < optIndices_.size(); ++k)
+        out[k] = specs_[optIndices_[k]].apply_bounds;
+    return out;
+}
+
 std::vector<double> ParameterMapper::expandToFullParameterSet(const std::vector<double>& x_opt) const {
     if (x_opt.size() != numOptParams()) {
         throw std::invalid_argument("ParameterMapper::expandToFullParameterSet size mismatch");

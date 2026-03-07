@@ -99,6 +99,9 @@ std::vector<ParamSpec> CsvParamLoader::load(const std::string& path, std::string
             std::string up = col(row, "upper");
             if (!up.empty()) spec.upper = std::stod(up);
         } catch (...) {}
+        std::string ab = col(row, "apply_bounds");
+        spec.apply_bounds = (ab.empty() || ab == "1" || ab == "on" || ab == "true" || ab == "yes");
+        if (ab == "0" || ab == "off" || ab == "false" || ab == "no") spec.apply_bounds = false;
         spec.note = col(row, "note");
         out.push_back(spec);
     }

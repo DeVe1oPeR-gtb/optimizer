@@ -25,6 +25,9 @@ public:
     /** @brief トレース出力が有効か */
     static bool isTraceEnabled();
 
+    /** @brief LM でパラメータ上下限を適用するか（developer.cfg の lm_apply_bounds） */
+    static bool isLmApplyBoundsEnabled();
+
     /** @brief 実行する最適化器名のリスト（未指定時は PSO, DE, LM） */
     static const std::vector<std::string>& getOptimizersToRun();
 
@@ -36,6 +39,7 @@ private:
     static bool traceEnabled_;
     static std::ostream* traceStream_;
     static std::vector<std::string> optimizersToRun_;
+    static bool lmApplyBoundsEnabled_;
 };
 
 }  // namespace optimizer

@@ -9,12 +9,14 @@ namespace optimizer {
 bool TraceConfig::traceEnabled_ = false;
 std::ostream* TraceConfig::traceStream_ = nullptr;
 std::vector<std::string> TraceConfig::optimizersToRun_ = {"PSO", "DE", "LM"};
+bool TraceConfig::lmApplyBoundsEnabled_ = true;
 
 void TraceConfig::loadFromStruct(const RunConfig& config) {
     traceEnabled_ = config.trace_enabled;
     optimizersToRun_ = config.optimizer_names.empty()
         ? std::vector<std::string>{"PSO", "DE", "LM"}
         : config.optimizer_names;
+    lmApplyBoundsEnabled_ = config.lm_apply_bounds;
 }
 
 void TraceConfig::load(const std::string& path) {
@@ -35,6 +37,10 @@ void TraceConfig::load(const std::string& path) {
             std::string v;
             for (char c : val) v += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
             traceEnabled_ = (v == "on" || v == "1" || v == "true" || v == "yes");
+        } else if (key == "lm_apply_bounds") {
+            std::string v;
+            for (char c : val) v += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            lmApplyBoundsEnabled_ = (v == "on" || v == "1" || v == "true" || v == "yes");
         } else if (key == "optimizer") {
             optimizersToRun_.clear();
             std::istringstream ss(val);
@@ -50,6 +56,7 @@ void TraceConfig::load(const std::string& path) {
 }
 
 bool TraceConfig::isTraceEnabled() { return traceEnabled_; }
+bool TraceConfig::isLmApplyBoundsEnabled() { return lmApplyBoundsEnabled_; }
 const std::vector<std::string>& TraceConfig::getOptimizersToRun() { return optimizersToRun_; }
 std::ostream* TraceConfig::getTraceStream() { return traceStream_; }
 void TraceConfig::setTraceStream(std::ostream* s) { traceStream_ = s; }

@@ -10,7 +10,7 @@ namespace optimizer {
 /**
  * @brief CSV からパラメータ設定を読み込み・検証する
  *
- * CSV: 1行1パラメータ。列は param_name, enable_opt, init_mode, init_value, db_key, lower, upper, note。
+ * CSV: 1行1パラメータ。列は param_name, enable_opt, init_mode, init_value, db_key, lower, upper, apply_bounds, note。
  */
 class CsvParamLoader {
 public:

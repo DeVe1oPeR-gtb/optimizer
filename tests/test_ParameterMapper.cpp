@@ -18,11 +18,15 @@ TEST(ParameterMapper, EnableOpt) {
     LONGS_EQUAL(3, pm.numFullParams());
     auto lo = pm.getLowerBounds();
     auto up = pm.getUpperBounds();
+    auto ab = pm.getApplyBounds();
     LONGS_EQUAL(2, lo.size());
     DOUBLES_EQUAL(0.0, lo[0], 1e-12);
     DOUBLES_EQUAL(-1.0, lo[1], 1e-12);
     DOUBLES_EQUAL(1.0, up[0], 1e-12);
     DOUBLES_EQUAL(1.0, up[1], 1e-12);
+    LONGS_EQUAL(2, ab.size());
+    CHECK(ab[0]);
+    CHECK(ab[1]);
 }
 
 TEST(ParameterMapper, InitModeManual) {

@@ -10,6 +10,8 @@ optimizer/
 ├── run_tests.sh          # テスト実行
 ├── README.md
 ├── docs/
+│   ├── CODE_READING_GUIDE.md  # コードの読む順番・各モジュール概要（プログラマ向け）
+│   ├── COIL_STARTUP_FLOW.md   # コイルデータ読込・起動フロー（xcoil.txt, バイナリパス, 概要表示）
 │   ├── IMPROVEMENT_PLAN.md   # 改良計画・読解結果
 │   └── USERWORK.md           # USERWORK 一覧
 ├── config/

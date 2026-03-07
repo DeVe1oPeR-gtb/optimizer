@@ -1,5 +1,5 @@
-param_name,enable_opt,init_mode,init_value,db_key,lower,upper,note
-p1,1,manual,0.5,,0,1,first param
-p2,1,manual,-0.2,,-1,1,second param
-p3,0,manual,1.0,,,,
-p4,1,hybrid,0.0,db_p4,-0.5,0.5,hybrid init
+param_name,enable_opt,init_mode,init_value,db_key,lower,upper,apply_bounds,note
+p1,1,manual,0.5,,0,1,1,first param
+p2,1,manual,-0.2,,-1,1,1,second param
+p3,0,manual,1.0,,,,,p3 not optimized
+p4,1,hybrid,0.0,db_p4,-0.5,0.5,1,hybrid init

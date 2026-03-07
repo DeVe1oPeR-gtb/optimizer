@@ -27,9 +27,18 @@ ProductResidualBlock ProductRunner::run(const ProductMeta& meta,
         return block;
     }
 
-    block.residuals.resize(data->measured.size());
-    for (size_t i = 0; i < data->measured.size(); ++i)
-        block.residuals[i] = data->measured[i] - predicted[i];
+    const size_t n = data->measured.size();
+    auto isExcluded = [&meta](size_t i) {
+        for (size_t e : meta.excluded_data_indices)
+            if (e == i) return true;
+        return false;
+    };
+    block.residuals.clear();
+    block.residuals.reserve(n);
+    for (size_t i = 0; i < n; ++i) {
+        if (isExcluded(i)) continue;
+        block.residuals.push_back(data->measured[i] - predicted[i]);
+    }
     block.size = block.residuals.size();
     block.ok = true;
     return block;

@@ -7,6 +7,10 @@
 #include "param/ParamSpec.h"
 #include "util/Handler.h"
 #include "util/TraceConfig.h"
+#include "util/DataConfig.h"
+#include "util/CoilList.h"
+#include "util/CoilDataPath.h"
+#include "util/TerminalMessage.h"
 #include "util/OptimizerDriver.h"
 #include "mock/Demo.h"
 #include <iostream>
@@ -17,9 +21,9 @@
 
 static std::vector<optimizer::ParamSpec> makeSpecs() {
     return {
-        {"p0", 1, optimizer::InitMode::Manual, 0.0, "", -5.0, 5.0, ""},
-        {"p1", 1, optimizer::InitMode::Manual, 0.0, "", -5.0, 5.0, ""},
-        {"p2", 1, optimizer::InitMode::Manual, 0.0, "", -5.0, 5.0, ""},
+        {"p0", 1, optimizer::InitMode::Manual, 1.0, "", -5.0, 5.0, ""},
+        {"p1", 1, optimizer::InitMode::Manual, -0.5, "", -5.0, 5.0, ""},
+        {"p2", 1, optimizer::InitMode::Manual, 0.1, "", -5.0, 5.0, ""},
     };
 }
 
@@ -55,10 +59,37 @@ static int nIterFor(const std::string& opt) {
 }
 
 int main() {
-    Handler handler("config/developer.cfg");
+    const std::string configPath = "config/developer.cfg";
+    Handler handler(configPath);
+    optimizer::DataConfig::load(configPath);
     ensureResultDir();
     if (optimizer::TraceConfig::isTraceEnabled())
         ensureLogDir();
+
+    std::vector<optimizer::CoilEntry> coils;
+    const std::string xcoilPath = optimizer::DataConfig::getXcoilFilePath();
+    if (!xcoilPath.empty()) {
+        int n = optimizer::loadCoilListFromFile(xcoilPath, coils);
+        if (n >= 0) {
+            const std::string dataPath = optimizer::DataConfig::getDataPath();
+            const std::string structName = optimizer::DataConfig::getBinaryStructName();
+            int existsCount = 0;
+            for (const auto& e : coils) {
+                std::string path = optimizer::CoilDataPath::buildPath(dataPath, e.coil_no, e.yyyymmdd, structName);
+                if (optimizer::CoilDataPath::fileExists(path)) ++existsCount;
+            }
+            std::vector<std::string> lines = {
+                "xcoil_file: " + xcoilPath,
+                "data_path: " + dataPath,
+                "binary_struct: " + structName,
+                "コイル件数: " + std::to_string(coils.size()),
+                "バイナリ存在: " + std::to_string(existsCount) + " / " + std::to_string(coils.size())
+            };
+            optimizer::TerminalMessage::summary("コイルデータ読込概要", lines);
+        } else {
+            optimizer::TerminalMessage::error("xcoil ファイルを開けません: " + xcoilPath);
+        }
+    }
 
     optimizer::ParameterMapper mapper;
     mapper.setSpecs(makeSpecs());

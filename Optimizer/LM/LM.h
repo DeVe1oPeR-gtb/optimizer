@@ -26,6 +26,11 @@ class LM : public Optimizer {
     const std::vector<T>& getNextDelta();
     const Optimizer::Stats<T>& getStats();
 
+    /** @brief ダンピングパラメータ λ の設定（adaptive LM 用） */
+    void setLambda(T lambda) { lambda_ = lambda; }
+    /** @brief 現在の λ を取得 */
+    T getLambda() const { return lambda_; }
+
     /** トレース出力（開発者用設定でON時のみ有効）。z は現在のパラメータベクトル。 */
     void setTraceStream(std::ostream* s) { traceStream_ = s; }
     void setTraceEnabled(bool en) { traceEnabled_ = en; }

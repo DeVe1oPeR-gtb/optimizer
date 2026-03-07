@@ -79,6 +79,15 @@ $(BUILD)/util_Handler.o: util/Handler.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 $(BUILD)/util_OptimizerDriver.o: util/OptimizerDriver.cpp | $(BUILD)
 	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
+# util (TerminalMessage, DataConfig, CoilList, CoilDataPath)
+$(BUILD)/util_TerminalMessage.o: util/TerminalMessage.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(BUILD)/util_DataConfig.o: util/DataConfig.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(BUILD)/util_CoilList.o: util/CoilList.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(BUILD)/util_CoilDataPath.o: util/CoilDataPath.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 # mock（テスト用モック + デモ用モデル・ローダ・エントリ）
 $(BUILD)/mock_Demo.o: mock/Demo.cpp | $(BUILD)
 	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
@@ -103,7 +112,9 @@ DEMO_OBJ_LIST = $(BUILD)/Optimizer_Optimizer.o $(BUILD)/PSO_PSO.o $(BUILD)/LM_LM
 	$(BUILD)/param_ParamSpec.o $(BUILD)/param_CsvParamLoader.o $(BUILD)/param_ParameterMapper.o \
 	$(BUILD)/product_ProductRunner.o $(BUILD)/product_BatchEvaluationHandler.o \
 	$(BUILD)/objective_Objective.o $(BUILD)/util_TraceConfig.o $(BUILD)/util_IterationLog.o \
-	$(BUILD)/util_Handler.o $(BUILD)/util_OptimizerDriver.o $(BUILD)/mock_Demo.o $(BUILD)/mock_demo_main.o
+	$(BUILD)/util_Handler.o $(BUILD)/util_OptimizerDriver.o \
+	$(BUILD)/util_TerminalMessage.o $(BUILD)/util_DataConfig.o $(BUILD)/util_CoilList.o $(BUILD)/util_CoilDataPath.o \
+	$(BUILD)/mock_Demo.o $(BUILD)/mock_demo_main.o
 $(BUILD)/Demo: $(DEMO_OBJ_LIST)
 	$(CXX) $(CXXSTD) -o $@ $^
 
