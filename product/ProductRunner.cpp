@@ -10,6 +10,7 @@ ProductResidualBlock ProductRunner::run(const ProductMeta& meta,
     ProductResidualBlock block;
     block.product_id = meta.product_id;
 
+    // USERWORK: 実際の製品バイナリファイル読込処理をここに差し替える（loader_ の実装で行う）
     std::unique_ptr<ProductLoadedData> data = loader_->load(meta);
     if (!data || data->measured.empty()) {
         block.ok = false;
@@ -17,7 +18,7 @@ ProductResidualBlock ProductRunner::run(const ProductMeta& meta,
         return block;
     }
 
-    // USERWORK: Replace with real physical model call and product-specific residual formula.
+    // USERWORK: 実物理モデルの計算関数に置き換える
     std::vector<double> predicted = model_->run(fullParams, data.get());
 
     if (predicted.size() != data->measured.size()) {

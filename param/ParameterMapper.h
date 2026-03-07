@@ -7,8 +7,8 @@
 
 namespace optimizer {
 
-/// USERWORK: In production, DB values are loaded from real DB. This interface allows
-/// injecting values for db_key. If not set, init_value is used for db/hybrid when key not found.
+/// USERWORK: 現場DBファイルから db_key に対応する値を取得する実装に差し替える。
+/// In production, DB values are loaded from real DB. This interface allows injecting values for db_key.
 using DbValueProvider = double (*)(const std::string& db_key);
 
 /// Maps between full parameter set (all params for the physical model) and
