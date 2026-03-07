@@ -5,7 +5,11 @@
 
 namespace optimizer {
 
-/// Mock: returns dummy measured/positions for testing.
+/**
+ * @brief テスト用モックデータローダ
+ *
+ * ダミーの実測・位置データを返す。
+ */
 class MockProductDataLoader : public IProductDataLoader {
 public:
     std::unique_ptr<ProductLoadedData> load(const ProductMeta& meta) override;

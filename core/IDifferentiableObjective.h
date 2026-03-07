@@ -7,12 +7,18 @@
 
 namespace optimizer {
 
-/// Objective that can provide residuals and Jacobian (for LM).
+/**
+ * @brief 残差とヤコビアンを返せる目的関数（LM 用）
+ */
 class IDifferentiableObjective : public IObjective {
 public:
     ~IDifferentiableObjective() override = default;
 
-    /// Evaluate at x and return residuals plus Jacobian (e.g. by finite differences).
+    /**
+     * @brief x での評価とヤコビアン（例: 数値微分）
+     * @param x 最適化対象パラメータベクトル
+     * @return 残差とヤコビ行列
+     */
     virtual JacobianResult evaluateWithJacobian(const std::vector<double>& x) = 0;
 };
 

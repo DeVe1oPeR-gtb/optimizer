@@ -5,30 +5,39 @@
 
 namespace optimizer {
 
-/// Initial value source for a parameter.
+/**
+ * @brief パラメータの初期値の取り方
+ */
 enum class InitMode {
-    Manual,   /// use init_value only
-    Db,       /// use DB value (db_key)
-    Hybrid    /// use DB if available, else init_value
+    Manual,   /**< init_value のみ使用 */
+    Db,       /**< DB 値（db_key）を使用 */
+    Hybrid    /**< DB にあれば DB 値、なければ init_value */
 };
 
-/// One row of parameter config (one parameter).
+/**
+ * @brief パラメータ設定の1行分（1パラメータ）
+ */
 struct ParamSpec {
-    std::string param_name;
-    int enable_opt = 0;   /// 1 = include in optimization vector
+    std::string param_name;      /**< パラメータ名 */
+    int enable_opt = 0;          /**< 1 のとき最適化ベクトルに含める */
     InitMode init_mode = InitMode::Manual;
-    double init_value = 0.0;
-    std::string db_key;
-    double lower = 0.0;
-    double upper = 0.0;
-    std::string note;
+    double init_value = 0.0;     /**< 初期値（manual 時など） */
+    std::string db_key;          /**< DB 参照キー（db / hybrid 時） */
+    double lower = 0.0;          /**< 下限 */
+    double upper = 0.0;          /**< 上限 */
+    std::string note;            /**< 備考 */
 
+    /** @brief 有効な bounds を持つか（enable 時は別途バリデーション） */
     bool hasBounds() const {
-        return enable_opt != 0;  // when enabled, lower/upper must be set (validated elsewhere)
+        return enable_opt != 0;
     }
 };
 
-/// Parse init_mode string to enum. Returns InitMode::Manual for unknown.
+/**
+ * @brief init_mode 文字列を列挙に変換
+ * @param s "manual" / "db" / "hybrid"（大文字可）
+ * @return 対応する InitMode。未対応なら Manual
+ */
 InitMode parseInitMode(const std::string& s);
 
 }  // namespace optimizer

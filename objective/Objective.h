@@ -8,17 +8,26 @@
 
 namespace optimizer {
 
-/// Objective that uses ParameterMapper + BatchEvaluationHandler.
-/// evaluate(x) expands x to full params, runs batch evaluation, returns objective + residuals.
-/// evaluateWithJacobian(x) uses finite differences.
+/**
+ * @brief ParameterMapper と BatchEvaluationHandler を用いる目的関数
+ *
+ * evaluate(x): x を全パラメータに展開 → バッチ評価 → 目的値と残差を返す。
+ * evaluateWithJacobian(x): 数値微分でヤコビアンを計算。
+ */
 class Objective : public IDifferentiableObjective {
 public:
+    /**
+     * @param mapper 最適化ベクトル ⇔ 全パラメータの対応
+     * @param batch 全製品の一括評価
+     */
     Objective(ParameterMapper& mapper, BatchEvaluationHandler& batch);
 
     EvalResult evaluate(const std::vector<double>& x) override;
     JacobianResult evaluateWithJacobian(const std::vector<double>& x) override;
 
-    /// Finite-difference step for Jacobian (default 1e-7 * (1 + |x_j|)).
+    /**
+     * @brief ヤコビアン用の数値微分ステップ（デフォルト 1e-7 * (1 + |x_j|)）
+     */
     void setEpsilon(double eps) { epsilon_ = eps; }
     double epsilon() const { return epsilon_; }
 

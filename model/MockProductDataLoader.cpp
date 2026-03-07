@@ -4,7 +4,7 @@
 namespace optimizer {
 
 std::unique_ptr<ProductLoadedData> MockProductDataLoader::load(const ProductMeta& meta) {
-    // USERWORK: Replace with actual product file load (binary, CSV, etc.).
+    /* USERWORK: 実際の製品ファイル読込（バイナリ/CSV 等）に置き換える */
     auto data = std::make_unique<ProductLoadedData>();
     size_t n = 4 + (meta.product_id.size() % 4);
     data->measured.resize(n, 1.0);

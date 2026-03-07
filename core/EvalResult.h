@@ -5,11 +5,14 @@
 
 namespace optimizer {
 
-/// Result of a single objective evaluation.
-/// Optimizer sees a scalar objective and the full residual vector.
+/**
+ * @brief 1回の目的関数評価の結果
+ *
+ * 最適化器にはスカラ目的値と残差ベクトル全体を渡す。
+ */
 struct EvalResult {
-    double objective = 0.0;
-    std::vector<double> residuals;
+    double objective = 0.0;           /**< 目的関数値（スカラ） */
+    std::vector<double> residuals;   /**< 残差ベクトル（全製品連結） */
 };
 
 }  // namespace optimizer

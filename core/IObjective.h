@@ -6,14 +6,20 @@
 
 namespace optimizer {
 
-/// Common interface for objective evaluation.
-/// Optimizer receives always a residual vector; objective scalar is derived from it.
+/**
+ * @brief 目的関数評価の共通インターフェース
+ *
+ * 最適化器からは常に残差ベクトルを受け取り、目的スカラはそこから導出する。
+ */
 class IObjective {
 public:
     virtual ~IObjective() = default;
 
-    /// Evaluate at optimization vector x (only the enabled parameters).
-    /// Returns objective value and full residual vector (all products concatenated).
+    /**
+     * @brief 最適化ベクトル x での評価（enable_opt されたパラメータのみ）
+     * @param x 最適化対象パラメータベクトル
+     * @return 目的値と残差ベクトル（全製品連結）
+     */
     virtual EvalResult evaluate(const std::vector<double>& x) = 0;
 };
 

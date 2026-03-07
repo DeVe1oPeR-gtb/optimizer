@@ -5,11 +5,14 @@
 
 namespace optimizer {
 
-/// Result of evaluation with Jacobian (for LM and other gradient-based methods).
-/// jacobian[residual_index][param_index] = d(residual_i) / d(x_j).
+/**
+ * @brief ヤコビアン付き評価の結果（LM 等の勾配法用）
+ *
+ * jacobian[residual_index][param_index] = d(residual_i) / d(x_j)
+ */
 struct JacobianResult {
-    std::vector<double> residuals;
-    /// Jacobian: [num_residuals][num_params], row-major
+    std::vector<double> residuals;   /**< 残差ベクトル */
+    /** ヤコビ行列 [残差数][パラメータ数]、行優先 */
     std::vector<std::vector<double>> jacobian;
 };
 

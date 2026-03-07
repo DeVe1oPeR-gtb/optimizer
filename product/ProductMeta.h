@@ -5,10 +5,12 @@
 
 namespace optimizer {
 
-/// Lightweight metadata for one product (id, path, etc.).
+/**
+ * @brief 1製品分の軽量メタ情報（ID・ファイルパス等）
+ */
 struct ProductMeta {
-    std::string product_id;
-    std::string file_path;
+    std::string product_id;   /**< 製品 ID */
+    std::string file_path;   /**< データファイルパス等 */
 };
 
 }  // namespace optimizer

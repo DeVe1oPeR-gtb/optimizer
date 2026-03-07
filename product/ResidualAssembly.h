@@ -6,10 +6,12 @@
 
 namespace optimizer {
 
-/// Full concatenated residuals and per-product blocks (with offset/size).
+/**
+ * @brief 全製品の残差を連結したベクトルと、製品ごとのブロック情報
+ */
 struct ResidualAssembly {
-    std::vector<double> full_residuals;
-    std::vector<ProductResidualBlock> blocks;
+    std::vector<double> full_residuals;              /**< 全ブロックを連結した残差ベクトル */
+    std::vector<ProductResidualBlock> blocks;        /**< 製品ごとのブロック（offset/size 付き） */
 };
 
 }  // namespace optimizer

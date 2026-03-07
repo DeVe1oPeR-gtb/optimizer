@@ -5,17 +5,24 @@
 
 namespace optimizer {
 
-/// USERWORK: Input/output types may be product-specific. Here we use generic vectors.
-/// One product: one run returns one predicted vector (same length as measured / positions).
-
-/// Interface for 1-product physical model. Called once per product per evaluation.
+/**
+ * @brief 1製品用物理モデルのインターフェース
+ *
+ * USERWORK: 入出力の型・並びは製品仕様に依存する。ここでは汎用の vector を使用。
+ * 1製品につき1回呼び出し、実測/位置と同じ長さの予測ベクトルを返す。
+ */
 class IPhysicalModel {
 public:
     virtual ~IPhysicalModel() = default;
 
-    /// Run model for one product. Input: full parameter set for that product; product-loaded data.
-    /// Returns predicted values at the same positions as measured (one-to-one).
-    /// USERWORK: Replace with real physical model; input/output layout is product-specific.
+    /**
+     * @brief 1製品分のモデル実行
+     * @param fullParams その製品用の全パラメータ
+     * @param productLoadedData ロード済み製品データ（実測・位置等）
+     * @return 実測と同じ位置での予測値（1:1 対応）
+     *
+     * USERWORK: 実物理モデルに差し替え。入出力レイアウトは製品仕様に合わせる。
+     */
     virtual std::vector<double> run(const std::vector<double>& fullParams,
                                    const void* productLoadedData) = 0;
 };

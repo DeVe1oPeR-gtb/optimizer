@@ -40,7 +40,7 @@ std::vector<double> ParameterMapper::getInitialVector(DbValueProvider dbValuePro
             v = dbValueProvider(s.db_key);
         } else if (s.init_mode == InitMode::Hybrid && dbValueProvider && !s.db_key.empty()) {
             v = dbValueProvider(s.db_key);
-            // USERWORK: If DB returns "no value", fall back to init_value. Here we assume provider returns init_value when missing.
+            /* USERWORK: DB に値が無い場合は init_value にフォールバックする。ここでは未取得時は init_value を返す前提。 */
         }
         x[k] = v;
     }

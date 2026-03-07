@@ -88,9 +88,19 @@
         "variant": "cpp"
     },
     "C_Cpp.default.includePath": [
-        "util",
-        "Optimizer"
+        "${workspaceFolder}",
+        "${workspaceFolder}/Optimizer",
+        "${workspaceFolder}/PSO",
+        "${workspaceFolder}/LM",
+        "${workspaceFolder}/DE",
+        "${workspaceFolder}/util",
+        "${workspaceFolder}/param",
+        "${workspaceFolder}/product",
+        "${workspaceFolder}/model",
+        "${workspaceFolder}/objective",
+        "${workspaceFolder}/core"
     ],
+    "C_Cpp.default.cppStandard": "c++17",
     "files.watcherExclude": {
         "**/target": true
     }

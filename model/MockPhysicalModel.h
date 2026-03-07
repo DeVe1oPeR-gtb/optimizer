@@ -5,7 +5,11 @@
 
 namespace optimizer {
 
-/// Mock: returns dummy predictions (e.g. sum of first few params) for testing.
+/**
+ * @brief テスト用モック物理モデル
+ *
+ * パラメータの線形結合などダミー予測を返す。
+ */
 class MockPhysicalModel : public IPhysicalModel {
 public:
     std::vector<double> run(const std::vector<double>& fullParams,

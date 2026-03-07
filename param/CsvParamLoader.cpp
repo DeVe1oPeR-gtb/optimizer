@@ -136,8 +136,7 @@ bool CsvParamLoader::validate(const std::vector<ParamSpec>& specs,
         if (s.enable_opt != 0) {
             double init = s.init_value;
             if (s.init_mode == InitMode::Db || s.init_mode == InitMode::Hybrid) {
-                // USERWORK: DB value would be injected here; for now we use init_value for validation
-                // when DB is not available (hybrid) or in tests
+                /* USERWORK: 本番ではここで DB 値を注入。検証時は DB 未使用のため init_value でチェック。 */
             }
             if (init < s.lower || init > s.upper) {
                 errorMessage = "Initial value out of bounds for " + s.param_name;

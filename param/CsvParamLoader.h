@@ -7,14 +7,28 @@
 
 namespace optimizer {
 
-/// Load and validate parameter config from CSV.
-/// CSV: one row per parameter, columns param_name, enable_opt, init_mode, init_value, db_key, lower, upper, note.
+/**
+ * @brief CSV からパラメータ設定を読み込み・検証する
+ *
+ * CSV: 1行1パラメータ。列は param_name, enable_opt, init_mode, init_value, db_key, lower, upper, note。
+ */
 class CsvParamLoader {
 public:
-    /// Load specs from file. Returns empty vector and sets errorMessage on failure.
+    /**
+     * @brief ファイルから設定を読み込む
+     * @param path CSV ファイルパス
+     * @param[out] errorMessage 失敗時にエラー内容を格納
+     * @return 読み込んだ ParamSpec の列。失敗時は空
+     */
     std::vector<ParamSpec> load(const std::string& path, std::string& errorMessage);
 
-    /// Validate specs. Returns true if valid; otherwise errorMessage is set.
+    /**
+     * @brief 設定リストを検証する
+     * @param specs 検証対象
+     * @param allowedParamNames 許容するパラメータ名の一覧。空なら任意
+     * @param[out] errorMessage 不正時にエラー内容を格納
+     * @return 検証が通れば true
+     */
     bool validate(const std::vector<ParamSpec>& specs,
                   const std::vector<std::string>& allowedParamNames,
                   std::string& errorMessage) const;

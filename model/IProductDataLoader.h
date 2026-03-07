@@ -7,12 +7,20 @@
 
 namespace optimizer {
 
-/// Load one product's data from path (or id). USERWORK: Replace with real file/DB load.
+/**
+ * @brief 1製品分のデータをロードするインターフェース
+ *
+ * USERWORK: 実ファイル/DB からの読込実装に差し替える。
+ */
 class IProductDataLoader {
 public:
     virtual ~IProductDataLoader() = default;
 
-    /// Load data for the given product. Returns nullptr on failure.
+    /**
+     * @brief 指定製品のデータをロードする
+     * @param meta 製品メタ（ID・パス等）
+     * @return ロード済みデータ。失敗時は nullptr
+     */
     virtual std::unique_ptr<ProductLoadedData> load(const ProductMeta& meta) = 0;
 };
 

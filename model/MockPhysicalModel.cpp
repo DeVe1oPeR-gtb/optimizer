@@ -7,7 +7,7 @@ namespace optimizer {
 
 std::vector<double> MockPhysicalModel::run(const std::vector<double>& fullParams,
                                            const void* productLoadedData) {
-    // USERWORK: Replace with real physical model call.
+    /* USERWORK: 実物理モデルの計算に置き換える */
     std::size_t n = 4;
     if (productLoadedData) {
         const auto* data = static_cast<const ProductLoadedData*>(productLoadedData);

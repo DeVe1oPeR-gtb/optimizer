@@ -11,12 +11,23 @@
 
 namespace optimizer {
 
-/// Runs one product: load data, run physical model, build residual block (measured - predicted).
+/**
+ * @brief 1製品の評価: データ読込 → 物理モデル実行 → 残差ブロック作成（実測 - 予測）
+ */
 class ProductRunner {
 public:
+    /**
+     * @param model 1製品用物理モデル
+     * @param loader 製品データローダ
+     */
     ProductRunner(IPhysicalModel& model, IProductDataLoader& loader);
 
-    /// Run for one product. fullParams = full parameter set (same order as ParameterMapper).
+    /**
+     * @brief 1製品を評価する
+     * @param meta 製品メタ情報
+     * @param fullParams 全パラメータ（ParameterMapper の並びと同じ）
+     * @return 残差ブロック
+     */
     ProductResidualBlock run(const ProductMeta& meta, const std::vector<double>& fullParams);
 
 private:

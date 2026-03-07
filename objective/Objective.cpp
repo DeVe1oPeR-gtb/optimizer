@@ -13,11 +13,11 @@ EvalResult Objective::evaluate(const std::vector<double>& x) {
     ResidualAssembly asm_ = batch_->evaluate(full);
     EvalResult out;
     out.residuals = std::move(asm_.full_residuals);
-    // USERWORK: Replace with real objective formula (e.g. weighted sum of squares).
+    /* USERWORK: 実運用向けの目的関数式・重み付けに置き換える */
     double ss = 0.0;
     for (double r : out.residuals)
         ss += r * r;
-    out.objective = std::sqrt(ss);  // sqrt(sum of squares) as scalar
+    out.objective = std::sqrt(ss);
     return out;
 }
 
