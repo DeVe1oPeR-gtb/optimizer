@@ -1,0 +1,118 @@
+/*
+ * デモ用・後で削除。
+ * OptimizerDriver の利用例: 1 本の ParameterMapper と 3 モデル×最適化器で run を呼ぶだけ。
+ */
+
+#include "param/ParameterMapper.h"
+#include "param/ParamSpec.h"
+#include "util/Handler.h"
+#include "util/TraceConfig.h"
+#include "util/OptimizerDriver.h"
+#include "mock/Demo.h"
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include <sys/stat.h>
+
+static std::vector<optimizer::ParamSpec> makeSpecs() {
+    return {
+        {"p0", 1, optimizer::InitMode::Manual, 0.0, "", -5.0, 5.0, ""},
+        {"p1", 1, optimizer::InitMode::Manual, 0.0, "", -5.0, 5.0, ""},
+        {"p2", 1, optimizer::InitMode::Manual, 0.0, "", -5.0, 5.0, ""},
+    };
+}
+
+static void ensureResultDir() {
+#ifdef _WIN32
+    _mkdir("result");
+#else
+    mkdir("result", 0755);
+#endif
+}
+
+static void ensureLogDir() {
+#ifdef _WIN32
+    _mkdir("log");
+#else
+    mkdir("log", 0755);
+#endif
+}
+
+struct SummaryRow {
+    std::string model;
+    std::string optimizer;
+    double final_rmse;
+    double p0, p1, p2;
+    int n_iter;
+};
+
+static int nIterFor(const std::string& opt) {
+    if (opt == "PSO") return 120;
+    if (opt == "DE") return 120;
+    if (opt == "LM") return 80;
+    return 120;
+}
+
+int main() {
+    Handler handler("config/developer.cfg");
+    ensureResultDir();
+    if (optimizer::TraceConfig::isTraceEnabled())
+        ensureLogDir();
+
+    optimizer::ParameterMapper mapper;
+    mapper.setSpecs(makeSpecs());
+
+    std::vector<SummaryRow> summary;
+    const std::vector<optimizer::ProductMeta> products = {{"demo1", ""}};
+
+    optimizer::DemoPhysicalModel model1;
+    optimizer::DemoDataLoader loader1;
+    optimizer::DemoPhysicalModel2 model2;
+    optimizer::DemoDataLoader2 loader2;
+    optimizer::DemoPhysicalModel3 model3;
+    optimizer::DemoDataLoader3 loader3;
+
+    struct ModelEntry {
+        int id;
+        std::string name;
+        optimizer::IPhysicalModel* model;
+        optimizer::IProductDataLoader* loader;
+    };
+    std::vector<ModelEntry> models = {
+        {1, "quadratic", &model1, &loader1},
+        {2, "linear", &model2, &loader2},
+        {3, "rational_exp", &model3, &loader3}
+    };
+
+    for (const auto& m : models) {
+        for (const std::string& opt : handler.getOptimizersToRun()) {
+            std::string tracePath = "log/model" + std::to_string(m.id) + "_" + opt + "_trace.csv";
+            std::string logLabel = m.name + "-" + opt;
+            optimizer::RunResult result = optimizer::OptimizerDriver::run(
+                "config/developer.cfg", mapper, *m.model, *m.loader, products, opt,
+                tracePath, logLabel.c_str());
+            SummaryRow r;
+            r.model = m.name;
+            r.optimizer = opt;
+            r.final_rmse = result.bestScore;
+            r.p0 = result.bestParams.size() > 0 ? result.bestParams[0] : 0;
+            r.p1 = result.bestParams.size() > 1 ? result.bestParams[1] : 0;
+            r.p2 = result.bestParams.size() > 2 ? result.bestParams[2] : 0;
+            r.n_iter = nIterFor(opt);
+            summary.push_back(r);
+        }
+    }
+
+    std::ofstream sumFile("result/summary.csv");
+    sumFile << "model,optimizer,final_rmse,p0,p1,p2,n_iter\n";
+    for (const auto& r : summary)
+        sumFile << r.model << "," << r.optimizer << "," << r.final_rmse << ","
+                << r.p0 << "," << r.p1 << "," << r.p2 << "," << r.n_iter << "\n";
+
+    std::cout << "[Demo] " << summary.size() << " runs done. result/summary.csv written.";
+    if (optimizer::TraceConfig::isTraceEnabled())
+        std::cout << " Trace logs in log/.";
+    std::cout << "\n";
+    return 0;
+}

@@ -5,8 +5,7 @@
 #include "product/BatchEvaluationHandler.h"
 #include "product/ProductRunner.h"
 #include "product/ProductMeta.h"
-#include "model/MockPhysicalModel.h"
-#include "model/MockProductDataLoader.h"
+#include "mock/Mock.h"
 #include <vector>
 
 TEST_GROUP(Objective) {};

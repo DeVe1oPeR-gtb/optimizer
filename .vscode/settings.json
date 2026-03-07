@@ -95,7 +95,8 @@
         "${workspaceFolder}/product",
         "${workspaceFolder}/model",
         "${workspaceFolder}/objective",
-        "${workspaceFolder}/core"
+        "${workspaceFolder}/core",
+        "${workspaceFolder}/mock"
     ],
     "C_Cpp.default.cppStandard": "c++17",
     "files.watcherExclude": {

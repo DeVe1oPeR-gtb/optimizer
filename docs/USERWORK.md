@@ -13,7 +13,12 @@
 
 ## 差し替え方
 
-- **物理モデル**: `IPhysicalModel` を実装したクラスを用意し、ProductRunner 構築時に渡す。
-- **データローダ**: `IProductDataLoader` を実装したクラスを用意し、ProductRunner 構築時に渡す。
+- **物理モデル**: `IPhysicalModel` を実装したクラスを用意し、ProductRunner 構築時に渡す。`run(fullParams, productLoadedData)` の第二引数は通常 `ProductLoadedData*` にキャストして使用。現場で別型を渡す場合は、ラッパ内で現場型→予測用入力に変換してから既存シミュレータを呼ぶ。
+- **データローダ**: `IProductDataLoader` を実装したクラスを用意し、ProductRunner 構築時に渡す。コイルNO・日付等は product_id / file_path にまとめるか、現場で ProductMeta を拡張して利用する。
 - **DB 初期値**: `ParameterMapper::getInitialVector(DbValueProvider)` に、db_key → 値 を返す関数を渡す。
 - **目的関数式**: `Objective::evaluate` 内の objective 計算（現在は sqrt(sum of squares)）を重み付け・式に合わせて変更する。
+
+## 現場組み込み時のエントリ
+
+- **OptimizerDriver::run(...)** に、設定（ファイルパスまたは `RunConfig`）、**1 本の ParameterMapper**、model、loader、製品リスト、最適化器名を渡すと 1 回分の最適化を実行し `RunResult`（最良スコア・パラメータ）を返す。現場の main は PSO/DE/LM を include せず、この API だけ呼べばよい。
+- 設定をファイルに依存させない場合は `RunConfig` に `trace_enabled`・`optimizer_names`・反復数を詰めて `OptimizerDriver::run(config, mapper, ...)` を呼ぶ。

@@ -26,10 +26,14 @@ optimizer/
 │   ├── ProductRunner.h/cpp, BatchEvaluationHandler.h/cpp
 ├── objective/             # 目的関数
 │   ├── Objective.h, Objective.cpp
-├── model/                 # 物理モデル・データ読込（モック＋インターフェース）
-│   ├── IPhysicalModel.h, MockPhysicalModel.h/cpp
-│   ├── IProductDataLoader.h, MockProductDataLoader.h/cpp
-├── Optimizer/  # 最適化器（Optimizer 基底 + PSO/, LM/, DE/）, Handler/, util/  # 既存
+├── model/                 # 物理モデル・データ読込（インターフェースのみ）
+│   ├── IPhysicalModel.h, IProductDataLoader.h
+├── mock/                  # テスト用モック＋デモ用モデル・ローダ・エントリ
+│   ├── Mock.h, Mock.cpp   # テスト用 IPhysicalModel / IProductDataLoader 実装
+│   ├── Demo.h, Demo.cpp   # デモ用 3 モデル・3 ローダ
+│   └── demo_main.cpp      # デモ実行（make demo）
+├── Optimizer/             # 最適化器（Optimizer 基底 + PSO/, LM/, DE/）
+├── util/                  # TraceConfig, IterationLog, Handler（設定で最適化器切り替え）
 └── tests/                 # 追加テスト（ParameterMapper, ProductRunner, Batch, Objective, 接続）
 ```
 

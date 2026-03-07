@@ -1,6 +1,7 @@
 #ifndef OPTIMIZER_UTIL_TRACE_CONFIG_H
 #define OPTIMIZER_UTIL_TRACE_CONFIG_H
 
+#include "util/RunConfig.h"
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -11,11 +12,15 @@ namespace optimizer {
  * @brief 開発者用設定の読込
  *
  * config/developer.cfg を読み、trace=on|off と optimizer=PSO,DE,LM を解釈する。
+ * RunConfig を渡せばファイルに依存せず設定を注入できる。
  */
 class TraceConfig {
 public:
     /** @brief 設定ファイルを読み、トレース・最適化器リストを更新 */
     static void load(const std::string& path = "config/developer.cfg");
+
+    /** @brief RunConfig の内容で設定を上書き（ファイルを読まない） */
+    static void loadFromStruct(const RunConfig& config);
 
     /** @brief トレース出力が有効か */
     static bool isTraceEnabled();

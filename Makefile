@@ -4,9 +4,9 @@ CXXSTD = -std=c++17
 CPPUTEST_DIR ?= /home/mcqueen/cpputest
 BUILD = build
 
-INC = -I. -IOptimizer -Iutil -Iparam -Iproduct -Imodel -Iobjective -Icore \
+INC = -I. -IOptimizer -Iutil -Iparam -Iproduct -Imodel -Iobjective -Icore -Imock \
       -I$(CPPUTEST_DIR)/include
-INC_DEMO = -I. -IOptimizer -Iutil -Iparam -Iproduct -Imodel -Iobjective -Icore -Idemo
+INC_DEMO = -I. -IOptimizer -Iutil -Iparam -Iproduct -Imodel -Iobjective -Icore -Imock
 INC_UTIL = -I. -IOptimizer -Iutil -Iparam -Iproduct -Imodel -Iobjective -Icore
 CXXFLAGS = $(CXXSTD) -g -Wall $(INC)
 LDFLAGS = -L$(CPPUTEST_DIR)/lib -lCppUTest -lCppUTestExt
@@ -15,7 +15,7 @@ LDFLAGS = -L$(CPPUTEST_DIR)/lib -lCppUTest -lCppUTestExt
 LIB_SRCS = Optimizer/Optimizer.cpp \
            Optimizer/PSO/PSO.cpp Optimizer/LM/LM.cpp Optimizer/DE/DE.cpp \
            param/ParamSpec.cpp param/CsvParamLoader.cpp param/ParameterMapper.cpp \
-           model/MockPhysicalModel.cpp model/MockProductDataLoader.cpp \
+           mock/Mock.cpp \
            product/ProductRunner.cpp product/BatchEvaluationHandler.cpp \
            objective/Objective.cpp
 
@@ -43,9 +43,7 @@ $(BUILD)/param_CsvParamLoader.o: param/CsvParamLoader.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 $(BUILD)/param_ParameterMapper.o: param/ParameterMapper.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-$(BUILD)/model_MockPhysicalModel.o: model/MockPhysicalModel.cpp | $(BUILD)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-$(BUILD)/model_MockProductDataLoader.o: model/MockProductDataLoader.cpp | $(BUILD)
+$(BUILD)/mock_Mock.o: mock/Mock.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 $(BUILD)/product_ProductRunner.o: product/ProductRunner.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -76,28 +74,20 @@ $(BUILD)/util_TraceConfig.o: util/TraceConfig.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 $(BUILD)/util_IterationLog.o: util/IterationLog.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-# Handler（設定で最適化器を切り替え）
-$(BUILD)/Handler_Handler.o: Handler/Handler.cpp | $(BUILD)
+# util (Handler, OptimizerDriver)
+$(BUILD)/util_Handler.o: util/Handler.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(BUILD)/util_OptimizerDriver.o: util/OptimizerDriver.cpp | $(BUILD)
 	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
-# デモ用（後で削除する前提）
-$(BUILD)/demo_DemoPhysicalModel.o: demo/DemoPhysicalModel.cpp | $(BUILD)
+# mock（テスト用モック + デモ用モデル・ローダ・エントリ）
+$(BUILD)/mock_Demo.o: mock/Demo.cpp | $(BUILD)
 	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
-$(BUILD)/demo_DemoPhysicalModel2.o: demo/DemoPhysicalModel2.cpp | $(BUILD)
-	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
-$(BUILD)/demo_DemoPhysicalModel3.o: demo/DemoPhysicalModel3.cpp | $(BUILD)
-	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
-$(BUILD)/demo_DemoDataLoader.o: demo/DemoDataLoader.cpp | $(BUILD)
-	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
-$(BUILD)/demo_DemoDataLoader2.o: demo/DemoDataLoader2.cpp | $(BUILD)
-	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
-$(BUILD)/demo_DemoDataLoader3.o: demo/DemoDataLoader3.cpp | $(BUILD)
-	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
-$(BUILD)/demo_demo_main.o: demo/demo_main.cpp | $(BUILD)
+$(BUILD)/mock_demo_main.o: mock/demo_main.cpp | $(BUILD)
 	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
 
 LIB_OBJ_LIST = $(BUILD)/Optimizer_Optimizer.o $(BUILD)/PSO_PSO.o $(BUILD)/LM_LM.o $(BUILD)/DE_DE.o \
 	$(BUILD)/param_ParamSpec.o $(BUILD)/param_CsvParamLoader.o $(BUILD)/param_ParameterMapper.o \
-	$(BUILD)/model_MockPhysicalModel.o $(BUILD)/model_MockProductDataLoader.o \
+	$(BUILD)/mock_Mock.o \
 	$(BUILD)/product_ProductRunner.o $(BUILD)/product_BatchEvaluationHandler.o \
 	$(BUILD)/objective_Objective.o
 TEST_OBJ_LIST = $(BUILD)/AllTests.o $(BUILD)/PSO_test_PSO.o $(BUILD)/LM_test_LM.o $(BUILD)/DE_test_DE.o \
@@ -111,13 +101,9 @@ $(BUILD)/AllTests: $(LIB_OBJ_LIST) $(TEST_OBJ_LIST)
 # デモ実行ファイル（CppUTest 不要。後で削除する前提）
 DEMO_OBJ_LIST = $(BUILD)/Optimizer_Optimizer.o $(BUILD)/PSO_PSO.o $(BUILD)/LM_LM.o $(BUILD)/DE_DE.o \
 	$(BUILD)/param_ParamSpec.o $(BUILD)/param_CsvParamLoader.o $(BUILD)/param_ParameterMapper.o \
-	$(BUILD)/model_MockPhysicalModel.o $(BUILD)/model_MockProductDataLoader.o \
 	$(BUILD)/product_ProductRunner.o $(BUILD)/product_BatchEvaluationHandler.o \
 	$(BUILD)/objective_Objective.o $(BUILD)/util_TraceConfig.o $(BUILD)/util_IterationLog.o \
-	$(BUILD)/Handler_Handler.o \
-	$(BUILD)/demo_DemoPhysicalModel.o $(BUILD)/demo_DemoPhysicalModel2.o $(BUILD)/demo_DemoPhysicalModel3.o \
-	$(BUILD)/demo_DemoDataLoader.o $(BUILD)/demo_DemoDataLoader2.o $(BUILD)/demo_DemoDataLoader3.o \
-	$(BUILD)/demo_demo_main.o
+	$(BUILD)/util_Handler.o $(BUILD)/util_OptimizerDriver.o $(BUILD)/mock_Demo.o $(BUILD)/mock_demo_main.o
 $(BUILD)/Demo: $(DEMO_OBJ_LIST)
 	$(CXX) $(CXXSTD) -o $@ $^
 

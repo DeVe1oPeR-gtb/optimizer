@@ -10,6 +10,13 @@ bool TraceConfig::traceEnabled_ = false;
 std::ostream* TraceConfig::traceStream_ = nullptr;
 std::vector<std::string> TraceConfig::optimizersToRun_ = {"PSO", "DE", "LM"};
 
+void TraceConfig::loadFromStruct(const RunConfig& config) {
+    traceEnabled_ = config.trace_enabled;
+    optimizersToRun_ = config.optimizer_names.empty()
+        ? std::vector<std::string>{"PSO", "DE", "LM"}
+        : config.optimizer_names;
+}
+
 void TraceConfig::load(const std::string& path) {
     std::ifstream f(path);
     if (!f) return;
