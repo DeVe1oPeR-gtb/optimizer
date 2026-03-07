@@ -3,7 +3,7 @@
 
 /**
  * @file DataConfig.h
- * @brief コイルデータ用設定（xcoil_file, data_path, binary_struct）を developer.cfg から読む。
+ * @brief コイルデータ用設定（xcoil_file, data_path, binary_struct）を para.cfg から読む。
  */
 
 #include <string>
@@ -11,7 +11,7 @@
 namespace optimizer {
 
 /**
- * @brief コイルデータ用設定（developer.cfg から読込）
+ * @brief コイルデータ用設定（para.cfg から読込）
  *
  * xcoil_file: 年月日・コイルNO リストのファイルパス（例: xcoil.txt）
  * data_path:  バイナリファイルのベースディレクトリ

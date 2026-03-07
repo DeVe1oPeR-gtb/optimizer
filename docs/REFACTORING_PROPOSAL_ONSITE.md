@@ -53,7 +53,7 @@ ParameterMapper mapper;
 mapper.setSpecs(mySpecs);   // 現場の CSV/設定から 1 回だけ構築
 
 OptimizerDriver driver;
-auto result = driver.run("config/developer.cfg", mapper, model, loader, productList);
+auto result = driver.run("config/para.cfg", mapper, model, loader, productList);
 // result.bestScore, result.bestParams を使用
 ```
 

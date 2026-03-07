@@ -1,6 +1,8 @@
 #include "Optimizer/PSO/PSO.h"
 #include <algorithm>
+#include <cctype>
 #include <cstring>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 
@@ -10,6 +12,40 @@
 
 // Utility
 #include "csvwriter.h"
+
+#ifndef PSO_DEMO_TRACE_FILE
+#define PSO_DEMO_TRACE_FILE "log/PSO_AOT_DEMO_trace.csv"
+#endif
+#ifndef PSO_DEMO_CONFIG_FILE
+#define PSO_DEMO_CONFIG_FILE "config/para.cfg"
+#endif
+#ifndef PSO_DEMO_NUMAX
+#define PSO_DEMO_NUMAX 1000
+#endif
+
+/** コンフィグ（para.cfg）から PSO DEMO のモードを読む。true=reference、false=default */
+static bool loadPsoDemoReferenceMode() {
+    std::ifstream f(PSO_DEMO_CONFIG_FILE);
+    if (!f) return true;  /* ファイルなしは従来どおり reference */
+    std::string line;
+    while (std::getline(f, line)) {
+        auto sharp = line.find('#');
+        if (sharp != std::string::npos) line = line.substr(0, sharp);
+        auto eq = line.find('=');
+        if (eq == std::string::npos) continue;
+        std::string key, val;
+        for (size_t i = 0; i < eq; ++i)
+            if (!std::isspace(static_cast<unsigned char>(line[i]))) key += line[i];
+        for (size_t i = eq + 1; i < line.size(); ++i)
+            if (!std::isspace(static_cast<unsigned char>(line[i]))) val += line[i];
+        if (key != "pso_demo_mode" && key != "mode") continue;
+        for (auto& c : val) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        if (val == "default") return false;
+        if (val == "reference") return true;
+        break;
+    }
+    return true;
+}
 
 using std::cout;
 using std::endl;
@@ -137,31 +173,38 @@ TEST(PSO_SOT, UpdateParticle) {
 }
 
 TEST(PSO_AOT, DEMO) {
-    // FAIL("Start here...")
-
     const int NI    = 21;
     const int NM    = 6;
-    const int NR    = 50;
-    const int NUMAX = 00; // 更新回数
+    const int NR    = 500;  // 参照 reference/PSO_sample.c に合わせて 500
+    const int NUMAX = PSO_DEMO_NUMAX;
 
     ////////////////////////////////////////////////////////////////////////
-    // csv用
-    int csv_nu[NUMAX];
-    double csv_gb_mean[NUMAX];
-    double csv_gb_sig[NUMAX];
-    double csv_gb_rmse[NUMAX];
-    double csv_gb_pos[NUMAX][NM];
+    // トレース用
+    std::ofstream traceFile;
+    traceFile.open(PSO_DEMO_TRACE_FILE);
+    if (traceFile) {
+        traceFile << "iteration,best_particle,mean,std_dev,rmse";
+        for (int d = 0; d < NM; ++d) traceFile << ",p" << d;
+        traceFile << "\n";
+    }
+    ////////////////////////////////////////////////////////////////////////
+    // csv用（スタック溢出回避のため static）
+    static int csv_nu[NUMAX];
+    static double csv_gb_mean[NUMAX];
+    static double csv_gb_sig[NUMAX];
+    static double csv_gb_rmse[NUMAX];
+    static double csv_gb_pos[NUMAX][NM];
 
     const int NOP        = 5;
     int csv_out_pno[NOP] = {0, 100, 200, 300, 400};
-    double csv_p_pos[NUMAX][NOP];
-    double csv_bp_pos[NUMAX][NOP];
-    double csv_p_rmse[NUMAX][NOP];
+    static double csv_p_pos[NUMAX][NOP];
+    static double csv_bp_pos[NUMAX][NOP];
+    static double csv_p_rmse[NUMAX][NOP];
 
     const int NOZ = 100;
-    double csv_z5[NUMAX][NOZ];
-    double csv_bestz5[NUMAX][NOZ];
-    double csv_z5v[NUMAX][NOZ];
+    static double csv_z5[NUMAX][NOZ];
+    static double csv_bestz5[NUMAX][NOZ];
+    static double csv_z5v[NUMAX][NOZ];
     ////////////////////////////////////////////////////////////////////////
 
     // サンプルデータ
@@ -192,26 +235,28 @@ TEST(PSO_AOT, DEMO) {
     // ,67.18
     // ,182.17
     //     };
-    // 初期粒子範囲
+    // コンフィグで重み・乱数モードを切り替え（config/pso_demo.cfg の mode=reference|default）
+    const bool refMode = loadPsoDemoReferenceMode();
+
+    // 初期粒子範囲（参照時: [-0.1, 0.1]、default 時も同じ範囲で比較可能にしておく）
     std::vector<double> ll_bnd2(NM, -1000.0);
     std::vector<double> ul_bnd2(NM, 1000.0);
-    std::vector<double> ll_ini_bnd2(NM, -1.);
-    std::vector<double> ul_ini_bnd2(NM, 1.);
+    std::vector<double> ll_ini_bnd2(NM, -0.1);
+    std::vector<double> ul_ini_bnd2(NM, 0.1);
 
-    // PSOパラメータ
+    // PSOパラメータ（reference: 反復ごとに w を 0.7～0.8 で更新。default: 固定 0.7）
     std::vector<double> w(NM, 0.7);
     std::vector<double> c1(NM, 2.0);
     std::vector<double> c2(NM, 0.8);
-    std::random_device rd;  // 非決定的な乱数生成器を初期化
-    std::mt19937 gen(rd()); // メルセンヌ・ツイスタ生成器を初期化
-
-    // PSOパラメータの初期化 慣性は±10%バラつかせる
+    std::mt19937 gen(0u);
     std::uniform_real_distribution<double> dist(0.0, 0.1);
-    for (int d = 0; d < NM; ++d) {
-        w[d] = w[d] + dist(gen);
+    if (refMode) {
+        for (int d = 0; d < NM; ++d) w[d] = 0.7 + dist(gen);
     }
 
-    pso = new PSO(NR, NM, w, c1, c2, ll_bnd2, ul_bnd2);
+    // reference=固定シード 1、default=非決定的(0)
+    pso = new PSO(NR, NM, w, c1, c2, ll_bnd2, ul_bnd2, refMode ? 1u : 0u);
+    pso->setReferenceRngMode(refMode);
     pso->initParticles(ll_ini_bnd2, ul_ini_bnd2);
     const std::vector<PSO<double>::Particle> &particles = pso->getParticles();
 
@@ -219,6 +264,12 @@ TEST(PSO_AOT, DEMO) {
 
     PSO<double>::Gbest gb;
     for (int ik = 0; ik < NUMAX; ++ik) {  // 更新回数ループ
+        if (refMode) {
+            gen.seed(static_cast<unsigned>(ik));
+            for (int d = 0; d < NM; ++d) w[d] = 0.7 + dist(gen);
+            pso->setW(w);
+        }
+
         for (int ip = 0; ip < NR; ++ip) { // 粒子数ループ
             // 目的関数の計算
             double fz[NI] = {0.0};
@@ -268,6 +319,15 @@ TEST(PSO_AOT, DEMO) {
                     csv_gb_pos[ik][i]  = gb.position[i];
                 }
                 cout << endl;
+
+                if (traceFile) {
+                    traceFile << ik+1 << "," << gb.num_particle << "," << mean << "," << std << "," << gb.score;
+                    for (int i = 0; i < NM; ++i) traceFile << "," << gb.position[i];
+                    traceFile << "\n";
+                }
+        if (refMode)
+            pso->setSeed(static_cast<unsigned int>(ik));
+
         ////////////////////////////////////////////////////////////////////////
         ////////////////////////////////////////////////////////////////////////
         csv_nu[ik]      = ik + 1;

@@ -1,6 +1,6 @@
 /**
  * @file DataConfig.cpp
- * @brief コイルデータ用設定の読込（xcoil_file, data_path, binary_struct）。developer.cfg の key=val を解釈。
+ * @brief コイルデータ用設定の読込（xcoil_file, data_path, binary_struct）。para.cfg の key=val を解釈。
  */
 
 #include "util/DataConfig.h"

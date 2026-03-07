@@ -17,7 +17,7 @@ struct RunConfig {
     int n_iter_pso = 120;
     int n_iter_de = 120;
     int n_iter_lm = 80;
-    /** @brief LM でパラメータの上下限を適用するか（developer.cfg の lm_apply_bounds で切り替え） */
+    /** @brief LM でパラメータの上下限を適用するか（para.cfg の lm_apply_bounds で切り替え） */
     bool lm_apply_bounds = true;
 };
 

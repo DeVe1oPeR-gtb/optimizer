@@ -9,7 +9,7 @@
 
 ---
 
-## 設定（developer.cfg）
+## 設定（para.cfg）
 
 | キー | 説明 |
 |------|------|
@@ -40,7 +40,7 @@
 
 ### データ設定（util/DataConfig.h）
 
-- **DataConfig::load(path)** … developer.cfg を読む（xcoil_file, data_path, binary_struct）
+- **DataConfig::load(path)** … para.cfg を読む（xcoil_file, data_path, binary_struct）
 - **DataConfig::getXcoilFilePath()**
 - **DataConfig::getDataPath()**
 - **DataConfig::getBinaryStructName()**
@@ -61,7 +61,7 @@
 ## 推奨プログラム起動フロー
 
 1. **設定読込**  
-   `TraceConfig::load(configPath)` の後、`DataConfig::load(configPath)` で同じ developer.cfg を読む。
+   `TraceConfig::load(configPath)` の後、`DataConfig::load(configPath)` で同じ para.cfg を読む。
 
 2. **コイルリスト読込**  
    `DataConfig::getXcoilFilePath()` のパスで `loadCoilListFromFile(..., coils)` を呼び、`vector<CoilEntry> coils` を取得。

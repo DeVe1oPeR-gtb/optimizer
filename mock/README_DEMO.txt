@@ -6,7 +6,7 @@
   → result/summary.csv が出力される。trace=on のときは log/ にトレースログも出力。
 
 ■ トレース ON/OFF
-  config/developer.cfg で trace=on または trace=off。trace=on のときは log/ にトレース CSV を出力。
+  config/para.cfg で trace=on または trace=off。trace=on のときは log/ にトレース CSV を出力。
 
 ■ 内容
   - mock/Demo.h,cpp: 3種の物理モデル（2次多項式/線形/有理式+指数）と対応データローダ

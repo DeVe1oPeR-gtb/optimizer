@@ -15,6 +15,7 @@ optimizer/
 │   ├── IMPROVEMENT_PLAN.md   # 改良計画・読解結果
 │   └── USERWORK.md           # USERWORK 一覧
 ├── config/
+│   ├── para.cfg             # 最適化パラメータ・モード（trace, optimizer, n_iter_*, pso_demo_mode 等）
 │   └── params_sample.csv    # サンプル設定 CSV
 ├── core/                  # 評価インターフェース
 │   ├── EvalResult.h, JacobianResult.h

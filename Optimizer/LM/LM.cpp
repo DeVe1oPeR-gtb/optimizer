@@ -6,7 +6,7 @@ void gjm(const int&, std::vector<std::vector<T>>&);
 
 
 template <typename T>
-LM<T>::LM(int num_dim_, int num_data_, const std::vector<T>& z)
+LM<T>::LM(int num_dim_, int num_data_, const std::vector<T>& z, T r_perturb)
     : num_dim_(num_dim_), num_data_(num_data_)
 {
     J_.resize(num_data_, std::vector<T>(num_dim_, 0.0));
@@ -14,12 +14,11 @@ LM<T>::LM(int num_dim_, int num_data_, const std::vector<T>& z)
     Ad_.resize(num_dim_, std::vector<T>(num_dim_ + 1, 0.0));
     delta_.resize(num_dim_, 0.0);
 
-    // [TODO] 一旦ダンピングパラメータと摂動量は内部定数
-    lambda_ = 10.0;
-    r_.resize(num_dim_, 0.005);
+    lambda_ = 10.0;  // 初期値は呼び出し側で setLambda により上書き可能
+    r_.resize(num_dim_, r_perturb);
 
-    for(int d=0; d < num_dim_; ++d) delta_[d] = z[d]*r_[d];
-};
+    for (int d = 0; d < num_dim_; ++d) delta_[d] = z[d] * r_[d];
+}
 
 template <typename T> 
 LM<T>::~LM() = default;

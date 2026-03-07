@@ -33,4 +33,22 @@ void logIteration(int iteration, double score,
     logIterationTo(iteration, score, position, std::cout, label);
 }
 
+void logIterationWithStats(int iteration, double mean, double rmse,
+                           const std::vector<double>& position,
+                           const char* label) {
+    if (label && *label)
+        std::cout << "[" << label << "] ";
+    std::cout << "iter=" << iteration << " mean=" << mean << " rmse=" << rmse;
+    if (!position.empty()) {
+        std::cout << " pos=(";
+        for (size_t i = 0; i < position.size(); ++i) {
+            if (i > 0) std::cout << ",";
+            std::cout << position[i];
+        }
+        std::cout << ")";
+    }
+    std::cout << "\n";
+    std::cout.flush();
+}
+
 }  // namespace optimizer

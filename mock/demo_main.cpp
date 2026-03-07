@@ -59,7 +59,7 @@ static int nIterFor(const std::string& opt) {
 }
 
 int main() {
-    const std::string configPath = "config/developer.cfg";
+    const std::string configPath = "config/para.cfg";
     Handler handler(configPath);
     optimizer::DataConfig::load(configPath);
     ensureResultDir();
@@ -122,7 +122,7 @@ int main() {
             std::string tracePath = "log/model" + std::to_string(m.id) + "_" + opt + "_trace.csv";
             std::string logLabel = m.name + "-" + opt;
             optimizer::RunResult result = optimizer::OptimizerDriver::run(
-                "config/developer.cfg", mapper, *m.model, *m.loader, products, opt,
+                "config/para.cfg", mapper, *m.model, *m.loader, products, opt,
                 tracePath, logLabel.c_str());
             SummaryRow r;
             r.model = m.name;

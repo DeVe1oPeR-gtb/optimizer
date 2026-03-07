@@ -15,7 +15,8 @@
 template <typename T>
 class LM : public Optimizer {
   public:
-    explicit LM(int,int,const std::vector<T>&);
+    /** @param r_perturb 摂動量（ステップ幅まわり）。省略時 0.005 */
+    explicit LM(int num_dim, int num_data, const std::vector<T>& z, T r_perturb = static_cast<T>(0.005));
     virtual ~LM();
 
     void setJacobian(const int&, const std::vector<T>&);

@@ -20,18 +20,11 @@
 #include "Optimizer/LM/LM.h"
 #include <fstream>
 #include <memory>
+#include <string>
 #include <vector>
 #include <cmath>
 
 namespace optimizer {
-
-namespace {
-const int N_PARTICLE = 20;
-const int N_POP_DE = 20;
-const int N_ITER_PSO_DEFAULT = 120;
-const int N_ITER_DE_DEFAULT = 120;
-const int N_ITER_LM_DEFAULT = 80;
-}
 
 static std::vector<ProductRunResult> computeProductResults(
     IPhysicalModel& model,
@@ -73,18 +66,23 @@ static RunResult runPSO(Objective& objective,
                         const char* logLabel,
                         int nIter) {
     const size_t N_DIM = mapper.numOptParams();
+    const int nParticle = TraceConfig::getPsoNParticle();
+    const double initRad = TraceConfig::getPsoInitRadius();
     std::vector<double> lo = mapper.getLowerBounds(), up = mapper.getUpperBounds();
     std::vector<double> z0 = mapper.getInitialVector(nullptr);
-    std::vector<double> w(N_DIM, 0.7), c1(N_DIM, 1.8), c2(N_DIM, 1.8);
-    PSO<double> pso(N_PARTICLE, static_cast<int>(N_DIM), w, c1, c2, up, lo);
+    std::vector<double> w(N_DIM, TraceConfig::getPsoW());
+    std::vector<double> c1(N_DIM, TraceConfig::getPsoC1());
+    std::vector<double> c2(N_DIM, TraceConfig::getPsoC2());
+    PSO<double> pso(nParticle, static_cast<int>(N_DIM), w, c1, c2, up, lo);
     std::vector<double> initLo(N_DIM), initUp(N_DIM);
     for (size_t i = 0; i < N_DIM; ++i) {
-        initLo[i] = z0[i] - 0.5;
-        initUp[i] = z0[i] + 0.5;
+        initLo[i] = z0[i] - initRad;
+        initUp[i] = z0[i] + initRad;
     }
     pso.initParticles(initUp, initLo);
 
     std::ofstream traceFile;
+    std::ofstream particleTraceFile;
     if (TraceConfig::isTraceEnabled() && !tracePath.empty()) {
         traceFile.open(tracePath);
         if (traceFile) {
@@ -92,11 +90,27 @@ static RunResult runPSO(Objective& objective,
             pso.setTraceStream(&traceFile);
             pso.setTraceEnabled(true);
         }
+        std::string particleTracePath = tracePath;
+        auto pos = particleTracePath.rfind("_trace.");
+        if (pos != std::string::npos)
+            particleTracePath.replace(pos, 7, "_particle_trace.");
+        else if (particleTracePath.rfind(".csv") != std::string::npos)
+            particleTracePath.insert(particleTracePath.size() - 4, "_particle");
+        else
+            particleTracePath += "_particle_trace.csv";
+        particleTraceFile.open(particleTracePath);
+        if (particleTraceFile) {
+            particleTraceFile << "iteration,particle_id,score";
+            for (size_t d = 0; d < N_DIM; ++d) particleTraceFile << ",p" << d;
+            particleTraceFile << "\n";
+            pso.setParticleTraceStream(&particleTraceFile);
+            pso.setParticleTraceEnabled(true);
+        }
     }
 
     for (int iter = 0; iter < nIter; ++iter) {
         const auto& particles = pso.getParticles();
-        for (int i = 0; i < N_PARTICLE; ++i) {
+        for (int i = 0; i < nParticle; ++i) {
             auto res = objective.evaluate(particles[i].position);
             std::vector<std::pair<double, double>> ed = {{res.objective, 0.0}};
             pso.setEvalData(i, ed);
@@ -105,8 +119,9 @@ static RunResult runPSO(Objective& objective,
         }
         pso.updateGlobalBest();
         auto gb = pso.getGlobalBest();
-        logIteration(iter, gb.score, gb.position, logLabel);
+        logIterationWithStats(iter, gb.stats.mean, gb.stats.rmse, gb.position, logLabel);
         pso.writeTraceLine(iter);
+        pso.writeParticleTraceLine(iter);
         pso.updateParticles();
     }
 
@@ -123,13 +138,15 @@ static RunResult runDE(Objective& objective,
                        const char* logLabel,
                        int nIter) {
     const size_t N_DIM = mapper.numOptParams();
+    const int nPop = TraceConfig::getDeNPop();
+    const double initRad = TraceConfig::getDeInitRadius();
     std::vector<double> lo = mapper.getLowerBounds(), up = mapper.getUpperBounds();
     std::vector<double> z0 = mapper.getInitialVector(nullptr);
-    DE<double> de(N_POP_DE, static_cast<int>(N_DIM), 0.5, 0.9, up, lo);
+    DE<double> de(nPop, static_cast<int>(N_DIM), TraceConfig::getDeF(), TraceConfig::getDeCr(), up, lo);
     std::vector<double> initLo(N_DIM), initUp(N_DIM);
     for (size_t i = 0; i < N_DIM; ++i) {
-        initLo[i] = z0[i] - 0.5;
-        initUp[i] = z0[i] + 0.5;
+        initLo[i] = z0[i] - initRad;
+        initUp[i] = z0[i] + initRad;
     }
     de.initPopulation(initUp, initLo);
 
@@ -145,7 +162,7 @@ static RunResult runDE(Objective& objective,
 
     for (int iter = 0; iter < nIter; ++iter) {
         const auto& mutants = de.getMutants();
-        for (int i = 0; i < N_POP_DE; ++i) {
+        for (int i = 0; i < nPop; ++i) {
             auto res = objective.evaluate(mutants[i].position);
             std::vector<std::pair<double, double>> ed(res.residuals.size());
             for (size_t j = 0; j < res.residuals.size(); ++j) ed[j] = {res.residuals[j], 0.0};
@@ -158,7 +175,7 @@ static RunResult runDE(Objective& objective,
         const DE<double>::Individual* best = &pop[0];
         for (const auto& ind : pop)
             if (ind.score < best->score) best = &ind;
-        logIteration(iter, best->score, best->position, logLabel);
+        logIterationWithStats(iter, best->stats.mean, best->stats.rmse, best->position, logLabel);
         if (iter < nIter - 1) de.mutation();
     }
 
@@ -187,7 +204,8 @@ static RunResult runLM(Objective& objective,
     const size_t nData = data->measured.size();
     std::vector<double> measured = data->measured;
 
-    LM<double> lm(static_cast<int>(N_DIM), static_cast<int>(nData), z);
+    LM<double> lm(static_cast<int>(N_DIM), static_cast<int>(nData), z, TraceConfig::getLmRPerturb());
+    lm.setLambda(TraceConfig::getLmLambdaInit());
     std::ofstream traceFile;
     if (TraceConfig::isTraceEnabled() && !tracePath.empty()) {
         traceFile.open(tracePath);
@@ -198,9 +216,11 @@ static RunResult runLM(Objective& objective,
         }
     }
 
-    constexpr double LAMBDA_MIN = 1e-10;
-    constexpr double LAMBDA_MAX = 1e12;
-    constexpr int LM_MAX_TRY = 8;
+    const double lambdaMin = TraceConfig::getLmLambdaMin();
+    const double lambdaMax = TraceConfig::getLmLambdaMax();
+    const double lambdaDown = TraceConfig::getLmLambdaDown();
+    const double lambdaUp = TraceConfig::getLmLambdaUp();
+    const int lmMaxTry = TraceConfig::getLmMaxTry();
 
     std::vector<double> lo = mapper.getLowerBounds(), up = mapper.getUpperBounds();
     std::vector<bool> applyBounds = mapper.getApplyBounds();
@@ -219,7 +239,7 @@ static RunResult runLM(Objective& objective,
         }
         const double current_rmse = lm.getStats().rmse;
         bool accepted = false;
-        for (int tryStep = 0; tryStep < LM_MAX_TRY && !accepted; ++tryStep) {
+        for (int tryStep = 0; tryStep < lmMaxTry && !accepted; ++tryStep) {
             const std::vector<double>& delta = lm.getNextDelta();
             std::vector<double> z_new = z;
             for (size_t i = 0; i < N_DIM; ++i) {
@@ -237,11 +257,11 @@ static RunResult runLM(Objective& objective,
             new_rmse = std::sqrt(new_rmse / static_cast<double>(nData));
             if (new_rmse < current_rmse) {
                 z = z_new;
-                lm.setLambda(std::max(LAMBDA_MIN, lm.getLambda() * 0.5));
+                lm.setLambda(std::max(lambdaMin, lm.getLambda() * lambdaDown));
                 accepted = true;
             } else {
-                lm.setLambda(std::min(LAMBDA_MAX, lm.getLambda() * 10.0));
-                if (lm.getLambda() >= LAMBDA_MAX) accepted = true;
+                lm.setLambda(std::min(lambdaMax, lm.getLambda() * lambdaUp));
+                if (lm.getLambda() >= lambdaMax) accepted = true;
             }
         }
         if (accepted) {
@@ -250,7 +270,7 @@ static RunResult runLM(Objective& objective,
             lm.setEvalData(eval_data);
         }
         lm.writeTraceLine(iter, z);
-        logIteration(iter, lm.getStats().rmse, z, logLabel);
+        logIterationWithStats(iter, lm.getStats().mean, lm.getStats().rmse, z, logLabel);
     }
 
     RunResult out;
@@ -303,7 +323,8 @@ RunResult OptimizerDriver::run(const std::string& configPath,
                                 IResultWriter* resultWriter) {
     TraceConfig::load(configPath);
     return runImpl(mapper, model, loader, products, optimizerName, tracePath, logLabel,
-                  N_ITER_PSO_DEFAULT, N_ITER_DE_DEFAULT, N_ITER_LM_DEFAULT, resultWriter);
+                  TraceConfig::getNIterPso(), TraceConfig::getNIterDe(), TraceConfig::getNIterLm(),
+                  resultWriter);
 }
 
 RunResult OptimizerDriver::run(const RunConfig& config,

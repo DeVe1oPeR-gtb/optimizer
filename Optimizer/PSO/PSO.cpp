@@ -3,10 +3,10 @@
 #include <iostream>
 
 template <typename T>
-PSO<T>::PSO(int num_particles, int num_dim, std::vector<T> w, std::vector<T> c1, std::vector<T> c2, std::vector<T> ul_bound, std::vector<T> ll_bound)
-    : Optimizer(), // 基底クラスのコンストラクタを明示的に呼ぶ
+PSO<T>::PSO(int num_particles, int num_dim, std::vector<T> w, std::vector<T> c1, std::vector<T> c2, std::vector<T> ul_bound, std::vector<T> ll_bound, unsigned int seed)
+    : Optimizer(),
       num_dim_(num_dim), w_(w), c1_(c1), c2_(c2), ul_bound_(ul_bound), ll_bound_(ll_bound),
-      rng_(std::random_device{}()) {
+      rng_(seed != 0u ? seed : static_cast<unsigned int>(std::random_device{}())) {
 
     // 粒子の初期化
     particles_.resize(num_particles);
@@ -113,14 +113,30 @@ void PSO<T>::writeTraceLine(int iteration) const {
 }
 
 template <typename T>
+void PSO<T>::writeParticleTraceLine(int iteration) const {
+    if (!particleTraceEnabled_ || !particleTraceStream_) return;
+    auto& out = *particleTraceStream_;
+    for (size_t i = 0; i < particles_.size(); ++i) {
+        const auto& p = particles_[i];
+        out << iteration << "," << p.no << "," << p.my_score;
+        for (const auto& v : p.position) out << "," << v;
+        out << "\n";
+    }
+}
+
+template <typename T>
 void PSO<T>::updateParticles() {
     std::uniform_real_distribution<T> dist(0.0, 1.0);
     for (auto &p : particles_) {
+        T r1 = dist(rng_);
+        T r2 = dist(rng_);
         for (int d = 0; d < num_dim_; ++d) {
-            T r1 = dist(rng_);
-            T r2 = dist(rng_);
-            p.velocity[d] = w_[d] * p.velocity[d] 
-                          + c1_[d] * r1 * (p.best_position[d] - p.position[d]) 
+            if (!referenceRngMode_) {
+                r1 = dist(rng_);
+                r2 = dist(rng_);
+            }
+            p.velocity[d] = w_[d] * p.velocity[d]
+                          + c1_[d] * r1 * (p.best_position[d] - p.position[d])
                           + c2_[d] * r2 * (gbest_.position[d] - p.position[d]);
         }
     }

@@ -207,7 +207,7 @@ demo_main
 | 設定 | 役割 | 読むコード |
 |------|------|------------|
 | **config/params_sample.csv** | パラメータ名・enable_opt・初期値・上下限・apply_bounds | CsvParamLoader, ParameterMapper |
-| **config/developer.cfg** | trace=on/off, optimizer=PSO,DE,LM, lm_apply_bounds=on/off | TraceConfig::load |
+| **config/para.cfg** | trace, optimizer, n_iter_pso/de/lm, lm_apply_bounds, pso_demo_mode | TraceConfig::load |
 
 ---
 

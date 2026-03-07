@@ -20,6 +20,19 @@ void logIteration(int iteration, double score,
                   const char* label = nullptr);
 
 /**
+ * @brief 反復1回分を評価値（平均・RMSE）付きでターミナルへ出力する
+ *
+ * @param iteration 反復番号（0始まり）
+ * @param mean 残差の平均
+ * @param rmse 残差の RMSE（二乗平均平方根誤差）
+ * @param position 現在のパラメータベクトル
+ * @param label ラベル。nullptr の場合は省略
+ */
+void logIterationWithStats(int iteration, double mean, double rmse,
+                           const std::vector<double>& position,
+                           const char* label = nullptr);
+
+/**
  * @brief 上記と同様だが出力先を指定する版
  */
 void logIterationTo(int iteration, double score,
