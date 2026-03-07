@@ -1,36 +1,21 @@
-#ifndef D_OPTIMIZER_H
-#define D_OPTIMIZER_H
+#ifndef D_HANDLER_H
+#define D_HANDLER_H
 
-#include <cmath>
-#include <iostream>
-#include <numeric>
-#include <stdexcept>
-#include <utility>
-#include <vector> 
+#include <string>
+#include <vector>
 
-/////////////////////////////////////////////////////////////////////////////
-//
-//  Handler is responsible for ...
-//
-/////////////////////////////////////////////////////////////////////////////
-
-template <typename T>
+/**
+ * @brief 設定ファイルで指定された最適化器を返す窓口
+ *
+ * コンストラクタで config を読込み、getOptimizersToRun() で実行する最適化器名のリストを取得する。
+ */
 class Handler {
-  public:
-    explicit Handler(const string&);
+public:
+    explicit Handler(const std::string& configPath);
     virtual ~Handler();
 
-  private:
-    string algorighm_name_;
-    string file_name_;
-    void coilPreProcess();
-    void coilPostProcess();
-    void segmentPreProcess();
-    void segmentPostProcess();
-    void paramPreProcess();
-    void paramPostProcess();
-
-
+    /** @brief 実行する最適化器名のリスト（設定の optimizer= で指定、未指定時は PSO,DE,LM） */
+    std::vector<std::string> getOptimizersToRun() const;
 };
 
-#endif // D_OPTIMIZER_H
+#endif

@@ -8,6 +8,7 @@ namespace optimizer {
 
 bool TraceConfig::traceEnabled_ = false;
 std::ostream* TraceConfig::traceStream_ = nullptr;
+std::vector<std::string> TraceConfig::optimizersToRun_ = {"PSO", "DE", "LM"};
 
 void TraceConfig::load(const std::string& path) {
     std::ifstream f(path);
@@ -27,12 +28,22 @@ void TraceConfig::load(const std::string& path) {
             std::string v;
             for (char c : val) v += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
             traceEnabled_ = (v == "on" || v == "1" || v == "true" || v == "yes");
-            break;
+        } else if (key == "optimizer") {
+            optimizersToRun_.clear();
+            std::istringstream ss(val);
+            std::string name;
+            while (std::getline(ss, name, ',')) {
+                name.erase(0, name.find_first_not_of(" \t"));
+                name.erase(name.find_last_not_of(" \t") + 1);
+                if (!name.empty()) optimizersToRun_.push_back(name);
+            }
+            if (optimizersToRun_.empty()) optimizersToRun_ = {"PSO", "DE", "LM"};
         }
     }
 }
 
 bool TraceConfig::isTraceEnabled() { return traceEnabled_; }
+const std::vector<std::string>& TraceConfig::getOptimizersToRun() { return optimizersToRun_; }
 std::ostream* TraceConfig::getTraceStream() { return traceStream_; }
 void TraceConfig::setTraceStream(std::ostream* s) { traceStream_ = s; }
 

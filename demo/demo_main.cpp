@@ -14,6 +14,7 @@
 #include "Optimizer/PSO/PSO.h"
 #include "Optimizer/DE/DE.h"
 #include "Optimizer/LM/LM.h"
+#include "Handler/Handler.h"
 #include "util/TraceConfig.h"
 #include "util/IterationLog.h"
 #include "demo/DemoPhysicalModel.h"
@@ -209,7 +210,7 @@ struct SummaryRow {
 };
 
 int main() {
-    optimizer::TraceConfig::load("config/developer.cfg");
+    Handler handler("config/developer.cfg");
     ensureResultDir();
     if (optimizer::TraceConfig::isTraceEnabled())
         ensureLogDir();
@@ -278,17 +279,20 @@ int main() {
     optimizer::DemoPhysicalModel3 model3;
     optimizer::DemoDataLoader3 loader3;
 
-    runOne(1, "quadratic", model1, loader1, "PSO", runPSO, N_ITER_PSO);
-    runOne(1, "quadratic", model1, loader1, "DE", runDE, N_ITER_DE);
-    runLMOne(1, "quadratic", model1, loader1);
+    struct ModelEntry { int id; std::string name; optimizer::IPhysicalModel* model; optimizer::IProductDataLoader* loader; };
+    std::vector<ModelEntry> models = {
+        {1, "quadratic", &model1, &loader1},
+        {2, "linear", &model2, &loader2},
+        {3, "rational_exp", &model3, &loader3}
+    };
 
-    runOne(2, "linear", model2, loader2, "PSO", runPSO, N_ITER_PSO);
-    runOne(2, "linear", model2, loader2, "DE", runDE, N_ITER_DE);
-    runLMOne(2, "linear", model2, loader2);
-
-    runOne(3, "rational_exp", model3, loader3, "PSO", runPSO, N_ITER_PSO);
-    runOne(3, "rational_exp", model3, loader3, "DE", runDE, N_ITER_DE);
-    runLMOne(3, "rational_exp", model3, loader3);
+    for (const auto& m : models) {
+        for (const std::string& opt : handler.getOptimizersToRun()) {
+            if (opt == "PSO") runOne(m.id, m.name, *m.model, *m.loader, "PSO", runPSO, N_ITER_PSO);
+            else if (opt == "DE") runOne(m.id, m.name, *m.model, *m.loader, "DE", runDE, N_ITER_DE);
+            else if (opt == "LM") runLMOne(m.id, m.name, *m.model, *m.loader);
+        }
+    }
 
     std::ofstream sumFile("result/summary.csv");
     sumFile << "model,optimizer,final_rmse,p0,p1,p2,n_iter\n";
@@ -296,7 +300,7 @@ int main() {
         sumFile << r.model << "," << r.optimizer << "," << r.final_rmse << ","
                 << r.p0 << "," << r.p1 << "," << r.p2 << "," << r.n_iter << "\n";
 
-    std::cout << "[Demo] 9 runs done. result/summary.csv written.";
+    std::cout << "[Demo] " << summary.size() << " runs done. result/summary.csv written.";
     if (optimizer::TraceConfig::isTraceEnabled())
         std::cout << " Trace logs in log/.";
     std::cout << "\n";

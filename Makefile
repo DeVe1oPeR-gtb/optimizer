@@ -76,6 +76,9 @@ $(BUILD)/util_TraceConfig.o: util/TraceConfig.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 $(BUILD)/util_IterationLog.o: util/IterationLog.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+# Handler（設定で最適化器を切り替え）
+$(BUILD)/Handler_Handler.o: Handler/Handler.cpp | $(BUILD)
+	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
 # デモ用（後で削除する前提）
 $(BUILD)/demo_DemoPhysicalModel.o: demo/DemoPhysicalModel.cpp | $(BUILD)
 	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
@@ -111,6 +114,7 @@ DEMO_OBJ_LIST = $(BUILD)/Optimizer_Optimizer.o $(BUILD)/PSO_PSO.o $(BUILD)/LM_LM
 	$(BUILD)/model_MockPhysicalModel.o $(BUILD)/model_MockProductDataLoader.o \
 	$(BUILD)/product_ProductRunner.o $(BUILD)/product_BatchEvaluationHandler.o \
 	$(BUILD)/objective_Objective.o $(BUILD)/util_TraceConfig.o $(BUILD)/util_IterationLog.o \
+	$(BUILD)/Handler_Handler.o \
 	$(BUILD)/demo_DemoPhysicalModel.o $(BUILD)/demo_DemoPhysicalModel2.o $(BUILD)/demo_DemoPhysicalModel3.o \
 	$(BUILD)/demo_DemoDataLoader.o $(BUILD)/demo_DemoDataLoader2.o $(BUILD)/demo_DemoDataLoader3.o \
 	$(BUILD)/demo_demo_main.o
