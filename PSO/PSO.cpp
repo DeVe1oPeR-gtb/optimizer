@@ -140,6 +140,4 @@ void PSO<T>::printParticles(int n) {
     }
 }
 
-// 明示的インスタンス化
 template class PSO<double>;
-template class PSO<float>;

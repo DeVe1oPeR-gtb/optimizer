@@ -83,6 +83,8 @@ const Optimizer::Stats<T>& LM<T>::getStats() {
     return stats_;
 }
 
+template class LM<double>;
+
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 // helper
@@ -105,7 +107,3 @@ void gjm(const int& n, std::vector<std::vector<T>>& A) {
     }
     return;
 }
-
-// 明示的インスタンス化
-template class LM<double>;
-template class LM<float>;

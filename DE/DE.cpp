@@ -108,6 +108,4 @@ void DE<T>::selection() {
     }
 }
 
-// 明示的インスタンス化
 template class DE<double>;
-template class DE<float>;
