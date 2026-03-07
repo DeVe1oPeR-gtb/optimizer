@@ -8,6 +8,7 @@
 #include <random>
 #include <utility>
 #include <vector>
+#include <iosfwd>
 
 
 // Levenberg-Marquardt method 
@@ -25,6 +26,11 @@ class LM : public Optimizer {
     const std::vector<T>& getNextDelta();
     const Optimizer::Stats<T>& getStats();
 
+    /** トレース出力（開発者用設定でON時のみ有効）。z は現在のパラメータベクトル。 */
+    void setTraceStream(std::ostream* s) { traceStream_ = s; }
+    void setTraceEnabled(bool en) { traceEnabled_ = en; }
+    void writeTraceLine(int iteration, const std::vector<T>& z) const;
+
   private:
     // 実行時定数
     int num_dim_;
@@ -40,5 +46,7 @@ class LM : public Optimizer {
     std::vector<T> delta_;                  // ステップサイズ
     std::vector<std::pair<T,T>> eval_data_; // 評価データ
     Optimizer::Stats<T> stats_;
+    std::ostream* traceStream_ = nullptr;
+    bool traceEnabled_ = false;
 };
 #endif

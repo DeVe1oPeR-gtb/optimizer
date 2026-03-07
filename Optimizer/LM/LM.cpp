@@ -1,4 +1,4 @@
-#include "LM.h"
+#include "LM/LM.h"
 
 // helper
 template <typename T>
@@ -81,6 +81,16 @@ template <typename T>
 const Optimizer::Stats<T>& LM<T>::getStats() {
     stats_ = Optimizer::computeStats(eval_data_);
     return stats_;
+}
+
+template <typename T>
+void LM<T>::writeTraceLine(int iteration, const std::vector<T>& z) const {
+    if (!traceEnabled_ || !traceStream_) return;
+    Optimizer::Stats<T> s = Optimizer::computeStats(eval_data_);
+    auto& out = *traceStream_;
+    out << iteration << "," << s.rmse;
+    for (const auto& v : z) out << "," << v;
+    out << "\n";
 }
 
 template class LM<double>;

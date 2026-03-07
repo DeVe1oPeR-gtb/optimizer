@@ -1,5 +1,6 @@
-#include "PSO.h"
+#include "PSO/PSO.h"
 #include <iomanip>
+#include <iostream>
 
 template <typename T>
 PSO<T>::PSO(int num_particles, int num_dim, std::vector<T> w, std::vector<T> c1, std::vector<T> c2, std::vector<T> ul_bound, std::vector<T> ll_bound)
@@ -101,6 +102,15 @@ void PSO<T>::updateGlobalBest() {
 
 template <typename T>
 const typename PSO<T>::Gbest &PSO<T>::getGlobalBest() { return gbest_; }
+
+template <typename T>
+void PSO<T>::writeTraceLine(int iteration) const {
+    if (!traceEnabled_ || !traceStream_) return;
+    auto& out = *traceStream_;
+    out << iteration << "," << gbest_.score;
+    for (const auto& v : gbest_.position) out << "," << v;
+    out << "\n";
+}
 
 template <typename T>
 void PSO<T>::updateParticles() {

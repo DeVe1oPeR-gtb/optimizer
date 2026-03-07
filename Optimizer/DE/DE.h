@@ -4,6 +4,7 @@
 #include "Optimizer.h"
 #include <vector>
 #include <random>
+#include <iosfwd>
 
 template <typename T>
 class DE : public Optimizer {
@@ -24,7 +25,11 @@ class DE : public Optimizer {
     typename Optimizer::Stats<T> calcScore(const int &);
     void mutation();
     void selection();
-    
+
+    /** トレース出力（開発者用設定でON時のみ有効） */
+    void setTraceStream(std::ostream* s) { traceStream_ = s; }
+    void setTraceEnabled(bool en) { traceEnabled_ = en; }
+    void writeTraceLine(int iteration) const;
 
   private:
     std::vector<Individual> population_; // 個体集団
@@ -35,6 +40,8 @@ class DE : public Optimizer {
     std::vector<T> ul_bound_;
     std::vector<T> ll_bound_;
     std::mt19937 rng_;
+    std::ostream* traceStream_ = nullptr;
+    bool traceEnabled_ = false;
 };
 
 #endif // DE_H

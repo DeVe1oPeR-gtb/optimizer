@@ -90,9 +90,6 @@
     "C_Cpp.default.includePath": [
         "${workspaceFolder}",
         "${workspaceFolder}/Optimizer",
-        "${workspaceFolder}/PSO",
-        "${workspaceFolder}/LM",
-        "${workspaceFolder}/DE",
         "${workspaceFolder}/util",
         "${workspaceFolder}/param",
         "${workspaceFolder}/product",

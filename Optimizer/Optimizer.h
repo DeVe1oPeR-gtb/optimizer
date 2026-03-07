@@ -40,7 +40,7 @@ class Optimizer {
      * @return 差分の平均・標準偏差・RMSE
      */
     template <typename T>
-    Stats<T> computeStats(const std::vector<std::pair<T, T>>& eval_data) {
+    Stats<T> computeStats(const std::vector<std::pair<T, T>>& eval_data) const {
       Stats<T> stats;
       stats.initialize();
 

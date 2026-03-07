@@ -1,8 +1,8 @@
 #include "CppUTest/TestHarness.h"
 #include "core/IObjective.h"
 #include "core/EvalResult.h"
-#include "PSO/PSO.h"
-#include "DE/DE.h"
+#include "Optimizer/PSO/PSO.h"
+#include "Optimizer/DE/DE.h"
 #include <vector>
 #include <cmath>
 

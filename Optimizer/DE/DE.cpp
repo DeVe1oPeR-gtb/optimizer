@@ -1,6 +1,7 @@
-#include "DE.h"
+#include "DE/DE.h"
 #include <algorithm>
 #include <limits>
+#include <iostream>
 
 template <typename T>
 DE<T>::DE(int pop_size, int num_dim, T F, T CR, std::vector<T> ul_bound, std::vector<T> ll_bound)
@@ -92,6 +93,19 @@ void DE<T>::mutation() {
         }
         m++;
     }
+}
+
+template <typename T>
+void DE<T>::writeTraceLine(int iteration) const {
+    if (!traceEnabled_ || !traceStream_) return;
+    const Individual* best = &population_[0];
+    for (const auto& ind : population_) {
+        if (ind.score < best->score) best = &ind;
+    }
+    auto& out = *traceStream_;
+    out << iteration << "," << best->score;
+    for (const auto& v : best->position) out << "," << v;
+    out << "\n";
 }
 
 template <typename T>

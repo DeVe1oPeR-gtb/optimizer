@@ -8,6 +8,7 @@
 #include <random>
 #include <utility>
 #include <vector>
+#include <iosfwd>
 
 template <typename T>
 class PSO : public Optimizer {
@@ -44,6 +45,11 @@ class PSO : public Optimizer {
     const Gbest &getGlobalBest();
     void updateParticles();
 
+    /** トレース出力（開発者用設定でON時のみ有効） */
+    void setTraceStream(std::ostream* s) { traceStream_ = s; }
+    void setTraceEnabled(bool en) { traceEnabled_ = en; }
+    void writeTraceLine(int iteration) const;
+
   private:
     std::vector<Particle> particles_;
     Gbest gbest_;
@@ -55,6 +61,8 @@ class PSO : public Optimizer {
     std::mt19937 rng_;
     std::vector<T> ul_bound_;
     std::vector<T> ll_bound_;
+    std::ostream* traceStream_ = nullptr;
+    bool traceEnabled_ = false;
     void printParticles(int);
 };
 

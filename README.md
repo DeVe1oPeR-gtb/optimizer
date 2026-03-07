@@ -29,14 +29,14 @@ optimizer/
 ├── model/                 # 物理モデル・データ読込（モック＋インターフェース）
 │   ├── IPhysicalModel.h, MockPhysicalModel.h/cpp
 │   ├── IProductDataLoader.h, MockProductDataLoader.h/cpp
-├── Optimizer/, PSO/, LM/, DE/, Handler/, util/  # 既存
+├── Optimizer/  # 最適化器（Optimizer 基底 + PSO/, LM/, DE/）, Handler/, util/  # 既存
 └── tests/                 # 追加テスト（ParameterMapper, ProductRunner, Batch, Objective, 接続）
 ```
 
 ## 評価フロー
 
 ```
-Optimizer (PSO/DE/LM)
+Optimizer（PSO/DE/LM は Optimizer/ の下）
   → IObjective::evaluate(x) / evaluateWithJacobian(x)
   → Objective
   → ParameterMapper (x_opt → FullParameterSet)
