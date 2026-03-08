@@ -8,22 +8,24 @@
 #include <utility>
 #include <vector>
 
-///////////////////////////////////////////////////////////////////////////////
-//
-//  Optimizer is responsible for ...
-//
-///////////////////////////////////////////////////////////////////////////////
-// 
+/**
+ * @brief 最適化アルゴリズムの基底クラス
+ *
+ * 評価データ（実測・予測ペア）からの統計計算を提供する。
+ */
 class Optimizer {
   public:
     explicit Optimizer();
     virtual ~Optimizer();
 
+    /**
+     * @brief 評価データの統計（平均・標準偏差・RMSE）
+     */
     template <typename T>
     struct Stats {
-        T mean;
-        T std_dev;
-        T rmse;
+        T mean;     /**< 平均 */
+        T std_dev;  /**< 標準偏差 */
+        T rmse;     /**< 二乗平均平方根誤差 */
 
         void initialize() {
             mean    = static_cast<T>(0.0);
@@ -32,27 +34,29 @@ class Optimizer {
         }
     };
 
+    /**
+     * @brief 実測・予測ペア列から統計を計算する
+     * @param eval_data 各要素が (実測値, 予測値) のペア
+     * @return 差分の平均・標準偏差・RMSE
+     */
     template <typename T>
-    Stats<T> computeStats(const std::vector<std::pair<T, T>>& eval_data) {
+    Stats<T> computeStats(const std::vector<std::pair<T, T>>& eval_data) const {
       Stats<T> stats;
       stats.initialize();
-  
+
       if (eval_data.empty()) {
           return stats;
       }
-  
+
       std::vector<T> diffs;
       diffs.reserve(eval_data.size());
-  
-      // 差分を計算
+
       for (const auto &pair : eval_data) {
           diffs.push_back(pair.first - pair.second);
       }
-  
-      // 平均を計算
+
       stats.mean = std::accumulate(diffs.begin(), diffs.end(), static_cast<T>(0.0)) / diffs.size();
-  
-      // 分散（標準偏差用）
+
       T variance          = 0.0;
       T squared_error_sum = 0.0;
       for (T diff : diffs) {
@@ -61,13 +65,12 @@ class Optimizer {
       }
       variance /= diffs.size();
       stats.std_dev = std::sqrt(variance);
-  
-      // RMSE 計算
       stats.rmse = std::sqrt(squared_error_sum / diffs.size());
-  
+
       return stats;
     }
 
+    /** @brief パラメータ設定用（派生でオーバーライド可能） */
     virtual void setParam(const std::vector<double> &) {}
 
   private:
