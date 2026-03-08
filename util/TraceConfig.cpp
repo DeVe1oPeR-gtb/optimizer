@@ -42,6 +42,20 @@ double TraceConfig::lmLambdaUp_ = 10.0;
 int TraceConfig::lmMaxTry_ = 8;
 size_t TraceConfig::traceLogMaxBytes_ = 10 * 1024 * 1024;   // 10 MiB
 size_t TraceConfig::debugLogMaxBytes_ = 1 * 1024 * 1024;   // 1 MiB
+std::string TraceConfig::plogFilename_;
+std::string TraceConfig::csvFilenameAfter_;
+bool TraceConfig::detailEnabled_ = false;
+int TraceConfig::detailStartIndex_ = 0;
+int TraceConfig::detailMaxPoints_ = 0;
+bool TraceConfig::llogOneFile_ = true;
+std::string TraceConfig::llogFilename_;
+std::string TraceConfig::dlogFilename_;
+size_t TraceConfig::resultFileMaxBytes_ = 0;
+size_t TraceConfig::resultTotalMaxBytes_ = 0;
+std::string TraceConfig::resultFinalParamsFilename_;
+std::vector<std::string> TraceConfig::optimizationDataTypes_;
+double TraceConfig::optimizationPositionMin_ = 0.0;
+double TraceConfig::optimizationPositionMax_ = 1.0;
 
 void TraceConfig::loadFromStruct(const RunConfig& config) {
     traceEnabled_ = config.trace_enabled;
@@ -80,6 +94,16 @@ static int parsePositiveInt(const std::string& val, int defaultVal) {
     return static_cast<int>(n);
 }
 
+static int parseNonNegativeInt(const std::string& val, int defaultVal) {
+    const char* p = val.c_str();
+    while (*p == ' ' || *p == '\t') ++p;
+    if (*p == '\0') return defaultVal;
+    char* end = nullptr;
+    long n = std::strtol(p, &end, 10);
+    if (end == p || n < 0 || n > 1000000) return defaultVal;
+    return static_cast<int>(n);
+}
+
 static double parseDouble(const std::string& val, double defaultVal) {
     const char* p = val.c_str();
     while (*p == ' ' || *p == '\t') ++p;
@@ -101,7 +125,7 @@ static long parsePositiveLong(const std::string& val, long defaultVal) {
 }
 
 static bool isValidOptimizerName(const std::string& s) {
-    return s == "PSO" || s == "DE" || s == "LM";
+    return s == "PSO" || s == "DE" || s == "LM" || s == "INIT" || s == "DB";
 }
 
 void TraceConfig::load(const std::string& path) {
@@ -146,6 +170,10 @@ void TraceConfig::load(const std::string& path) {
             valTrim.erase(valTrim.find_last_not_of(" \t") + 1);
             if (valTrim == "ALL_OPT_EXEC") {
                 optimizersToRun_ = {"PSO", "DE", "LM"};
+            } else if (valTrim == "INIT") {
+                optimizersToRun_ = {"INIT"};
+            } else if (valTrim == "DB") {
+                optimizersToRun_ = {"DB"};
             } else {
                 std::istringstream ss(val);
                 std::string name;
@@ -155,7 +183,7 @@ void TraceConfig::load(const std::string& path) {
                     if (name.empty()) continue;
                     if (!isValidOptimizerName(name)) {
                         optimizerListValid_ = false;
-                        optimizerListError_ = "不正な最適化器名: " + name + "。PSO, DE, LM のいずれかを指定してください。";
+                        optimizerListError_ = "不正な最適化器名: " + name + "。PSO, DE, LM, INIT, DB のいずれかを指定してください。";
                         optimizersToRun_.clear();
                         break;
                     }
@@ -211,13 +239,55 @@ void TraceConfig::load(const std::string& path) {
         } else if (key == "debug_log_max_bytes") {
             long v = parsePositiveLong(val, static_cast<long>(debugLogMaxBytes_));
             debugLogMaxBytes_ = (v > 0) ? static_cast<size_t>(v) : debugLogMaxBytes_;
+        } else if (key == "plog_filename" || key == "result_filename_before") {
+            plogFilename_ = val;
+        } else if (key == "csv_filename_after" || key == "result_filename_after") {
+            csvFilenameAfter_ = val;
+        } else if (key == "detail_enabled" || key == "result_detail_enabled") {
+            detailEnabled_ = (val == "1" || val == "on" || val == "true");
+        } else if (key == "detail_start_index" || key == "result_detail_start_index") {
+            detailStartIndex_ = parseNonNegativeInt(val, detailStartIndex_);
+        } else if (key == "detail_max_points" || key == "result_detail_max_points") {
+            detailMaxPoints_ = parseNonNegativeInt(val, detailMaxPoints_);
+        } else if (key == "llog_one_file" || key == "result_detail_one_file") {
+            llogOneFile_ = (val != "0" && val != "off" && val != "false");
+        } else if (key == "llog_filename" || key == "result_detail_filename") {
+            llogFilename_ = val;
+        } else if (key == "dlog_filename" || key == "result_detail_filename_per_product") {
+            dlogFilename_ = val;
+        } else if (key == "result_file_max_bytes") {
+            long v = parsePositiveLong(val, static_cast<long>(resultFileMaxBytes_));
+            resultFileMaxBytes_ = (v >= 0) ? static_cast<size_t>(v) : resultFileMaxBytes_;
+        } else if (key == "result_total_max_bytes") {
+            long v = parsePositiveLong(val, static_cast<long>(resultTotalMaxBytes_));
+            resultTotalMaxBytes_ = (v >= 0) ? static_cast<size_t>(v) : resultTotalMaxBytes_;
+        } else if (key == "result_final_params_filename") {
+            resultFinalParamsFilename_ = val;
+        } else if (key == "optimization_data_types") {
+            optimizationDataTypes_.clear();
+            std::string v = val;
+            size_t pos = 0;
+            while (pos < v.size()) {
+                size_t next = v.find(',', pos);
+                if (next == std::string::npos) next = v.size();
+                std::string part = v.substr(pos, next - pos);
+                part.erase(0, part.find_first_not_of(" \t"));
+                part.erase(part.find_last_not_of(" \t") + 1);
+                if (!part.empty())
+                    optimizationDataTypes_.push_back(part);
+                pos = (next < v.size()) ? next + 1 : v.size();
+            }
+        } else if (key == "optimization_position_min") {
+            optimizationPositionMin_ = parseDouble(val, optimizationPositionMin_);
+        } else if (key == "optimization_position_max") {
+            optimizationPositionMax_ = parseDouble(val, optimizationPositionMax_);
         }
         }
     }
     if (!optimizerKeySeen) {
         optimizersToRun_.clear();
         optimizerListValid_ = false;
-        optimizerListError_ = "optimizer= が指定されていません。PSO, DE, LM のいずれかまたはカンマ区切りで指定するか、全て実行する場合は ALL_OPT_EXEC を指定してください。";
+        optimizerListError_ = "optimizer= が指定されていません。PSO, DE, LM, INIT, DB または ALL_OPT_EXEC を指定してください。";
     }
 }
 
@@ -261,5 +331,29 @@ double TraceConfig::getLmLambdaMax() { return lmLambdaMax_; }
 double TraceConfig::getLmLambdaDown() { return lmLambdaDown_; }
 double TraceConfig::getLmLambdaUp() { return lmLambdaUp_; }
 int TraceConfig::getLmMaxTry() { return lmMaxTry_; }
+
+const std::string& TraceConfig::getPLOGFilename() { return plogFilename_; }
+const std::string& TraceConfig::getCsvFilenameAfter() { return csvFilenameAfter_; }
+bool TraceConfig::getDetailEnabled() { return detailEnabled_; }
+int TraceConfig::getDetailStartIndex() { return detailStartIndex_; }
+int TraceConfig::getDetailMaxPoints() { return detailMaxPoints_; }
+bool TraceConfig::getLLOGOneFile() { return llogOneFile_; }
+const std::string& TraceConfig::getLLOGFilename() { return llogFilename_; }
+const std::string& TraceConfig::getDLOGFilename() { return dlogFilename_; }
+size_t TraceConfig::getResultFileMaxBytes() { return resultFileMaxBytes_; }
+size_t TraceConfig::getResultTotalMaxBytes() { return resultTotalMaxBytes_; }
+const std::string& TraceConfig::getResultFinalParamsFilename() { return resultFinalParamsFilename_; }
+
+const std::vector<std::string>& TraceConfig::getOptimizationDataTypes() { return optimizationDataTypes_; }
+
+bool TraceConfig::isDataTypeUsedForOptimization(const std::string& data_type_id) {
+    if (optimizationDataTypes_.empty()) return true;
+    for (const auto& t : optimizationDataTypes_)
+        if (t == data_type_id) return true;
+    return false;
+}
+
+double TraceConfig::getOptimizationPositionMin() { return optimizationPositionMin_; }
+double TraceConfig::getOptimizationPositionMax() { return optimizationPositionMax_; }
 
 }  // namespace optimizer

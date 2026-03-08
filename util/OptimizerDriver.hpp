@@ -9,6 +9,7 @@
 #include "param/param.hpp"
 #include "product/ProductMeta.hpp"
 #include "util/util_common.hpp"
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -34,7 +35,8 @@ struct RunResult {
  */
 class OptimizerDriver {
 public:
-    /** @brief 設定ファイルパスで 1 回実行。mapper は呼び出し側で 1 本用意したものを渡す。 */
+    /** @brief 設定ファイルパスで 1 回実行。mapper は呼び出し側で 1 本用意したものを渡す。
+     *  optimizerName が DB のときは dbValueProvider で DB 値を取得。INIT のときは設定の初期値を適用。 */
     static RunResult run(const std::string& configPath,
                          ParameterMapper& mapper,
                          IPhysicalModel& model,
@@ -43,7 +45,8 @@ public:
                          const std::string& optimizerName,
                          const std::string& tracePath = "",
                          const char* logLabel = nullptr,
-                         IResultWriter* resultWriter = nullptr);
+                         IResultWriter* resultWriter = nullptr,
+                         DbValueProvider dbValueProvider = nullptr);
 
     /** @brief RunConfig で設定を注入して 1 回実行（ファイルに依存しない） */
     static RunResult run(const RunConfig& config,
@@ -54,7 +57,8 @@ public:
                          const std::string& optimizerName,
                          const std::string& tracePath = "",
                          const char* logLabel = nullptr,
-                         IResultWriter* resultWriter = nullptr);
+                         IResultWriter* resultWriter = nullptr,
+                         DbValueProvider dbValueProvider = nullptr);
 
     /**
      * @brief 最適化なしで適用値のみ計算し、結果を出力する

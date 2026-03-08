@@ -12,6 +12,9 @@ namespace optimizer {
  * USERWORK: オンサイトで本インターフェースを実装し、ファイル・DB 等へ出力する。
  * - 適用値のみ計算時: writeApplyOnly が呼ばれる（最適化は行わない）
  * - 最適化終了後: writeAfterOptimization が呼ばれる（最適化済みパラメータで各製品を再計算した結果）
+ *
+ * 渡される results は呼び出し直前に loader で再ロード・model で再計算したもので、
+ * 最適化ループ内の一時的な製品データには依存しない。各 ProductRunResult はその時点のスナップショット。
  */
 class IResultWriter {
 public:

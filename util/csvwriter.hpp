@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdio>
 #include <type_traits>
+#include <sstream>
 
 template <std::size_t Rows>
 class CSVWriter {
@@ -150,6 +151,44 @@ private:
                    : base + "_" + std::to_string(i) + "_" + std::to_string(j);
     }
 };
+
+// -----------------------------------------------------------------------------
+// 可変行・可変列の CSV 書き出し（実行時に行数が決まる場合用。既存の CSVWriter<Rows> は行数固定用）
+// -----------------------------------------------------------------------------
+inline static std::string escapeCsvCell(const std::string& s) {
+    if (s.find(',') == std::string::npos && s.find('"') == std::string::npos && s.find('\n') == std::string::npos)
+        return s;
+    std::ostringstream out;
+    out << '"';
+    for (char c : s) {
+        if (c == '"') out << "\"\"";
+        else out << c;
+    }
+    out << '"';
+    return out.str();
+}
+
+inline void writeCsvTable(const std::string& filename,
+                         const std::vector<std::string>& headers,
+                         const std::vector<std::vector<std::string>>& rows) {
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Failed to open file: " << filename << std::endl;
+        return;
+    }
+    for (size_t i = 0; i < headers.size(); ++i) {
+        file << escapeCsvCell(headers[i]);
+        if (i < headers.size() - 1) file << ",";
+    }
+    file << "\n";
+    for (const auto& row : rows) {
+        for (size_t i = 0; i < row.size(); ++i) {
+            file << escapeCsvCell(row[i]);
+            if (i < row.size() - 1) file << ",";
+        }
+        file << "\n";
+    }
+}
 
 // 使用例
 // int main() {

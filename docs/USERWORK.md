@@ -38,11 +38,11 @@
   - **IProductDataLoader 実装**（例: sim/compat_data.cpp）: common や DB 読込用ヘッダを include。
   - **IResultWriter 実装**: 現場の出力形式用ヘッダを include。
 
-（構成案の詳細は docs/ONSITE_LAYOUT_PROPOSAL.md 参照。）
+（構成は onsite/ を参照。）
 
 ## 結果出力（オンサイトで実装）
 
-- **IResultWriter** を実装し、`writeApplyOnly` と `writeAfterOptimization` で現場仕様のファイル・DB 等に書き出す。
+- **IResultWriter** を実装し、`writeApplyOnly` と `writeAfterOptimization` で現場仕様のファイル・DB 等に書き出す。util の **ResultOutput**（PLOG / LLOG / DLOG）を使う場合は、setPLOGFilename → writePLOG（列を横に追加）→ 終了時に flushPLOG の流れで 1 ファイルにまとめて書き出せる。
 - **適用値のみ計算（最適化なし）**: `OptimizerDriver::runApplyOnly(mapper, model, loader, products, dbValueProvider, resultWriter)` を呼ぶ。DB から読んだ適用値と設定の初期値で `getInitialVector(dbValueProvider)` により fullParams を組み、各製品を 1 回ずつ計算して `resultWriter.writeApplyOnly(fullParams, results)` が呼ばれる。
 - **最適化終了後**: `OptimizerDriver::run(..., resultWriter)` に `IResultWriter`* を渡すと、最適化終了後に最適化済みパラメータで各製品を再計算し、`resultWriter.writeAfterOptimization(fullParams, results)` が呼ばれる。
 - 各呼び出しで渡る `ProductRunResult` は製品ごとの `product_id`・`measured`・`predicted`・`residuals`（と `ok` / `error_message`）。出力形式は IResultWriter 実装側で自由に決める。

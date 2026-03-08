@@ -89,3 +89,16 @@
 | lm_lambda_min / lm_lambda_max | λ の下限/上限 | 1e-10 / 1e12 |
 | lm_lambda_down / lm_lambda_up | ステップ採用時の λ 縮小率/却下時の拡大率 | 0.5 / 10.0 |
 | lm_max_try | 1 反復あたりの最大試行回数（1 未満は 1 に clamp） | 8 |
+| **結果出力（PLOG / LLOG / DLOG）** | | |
+| plog_filename | PLOG 出力先（1 製品 1 行・列横追加。終了時 1 回 flush）。{timestamp}, {product_id} 利用可 | （空なら無効） |
+| csv_filename_after | 汎用 CSV 最適化後用（2 タイミング書き出し時） | （空なら無効） |
+| detail_enabled | LLOG/DLOG を有効にするか（1/on/true） | 0 |
+| detail_start_index / detail_max_points | 詳細の開始インデックス・最大点数 | 0 / 0 |
+| llog_one_file | LLOG を全製品 1 ファイルにまとめるか | 1 |
+| llog_filename | LLOG 出力先（全製品 1 ファイル） | （空なら無効） |
+| dlog_filename | DLOG 出力先（1 製品 1 ファイル）。{product_id} 利用可 | （空なら無効） |
+| result_file_max_bytes / result_total_max_bytes | 1 ファイル・合計の最大バイト（0=制限なし） | 0 / 0 |
+| result_final_params_filename | 最適化終了パラメータを書き出すテキストファイル | （空なら無効） |
+| **データフィルタ** | | |
+| optimization_data_types | 最適化に使う data_type_id（カンマ区切り。空なら全種類） | （空） |
+| optimization_position_min / optimization_position_max | position の有効範囲（0～1）。範囲外は最適化対象外 | 0.0 / 1.0 |

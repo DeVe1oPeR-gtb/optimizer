@@ -87,6 +87,34 @@ public:
     static double getLmLambdaUp();
     static int getLmMaxTry();
 
+    /** @brief PLOG 出力先ファイル名フォーマット（空なら無効）。{timestamp}, {product_id} 等利用可 */
+    static const std::string& getPLOGFilename();
+    /** @brief 汎用 CSV 最適化後ファイル名（2 タイミング書き出しの後用）。空なら無効 */
+    static const std::string& getCsvFilenameAfter();
+    /** @brief LLOG/DLOG 有効フラグ, 開始インデックス, 最大点数, LLOG を 1 ファイルにまとめるか */
+    static bool getDetailEnabled();
+    static int getDetailStartIndex();
+    static int getDetailMaxPoints();
+    static bool getLLOGOneFile();
+    /** @brief LLOG ファイル名フォーマット（全製品 1 ファイル） */
+    static const std::string& getLLOGFilename();
+    /** @brief DLOG ファイル名フォーマット（1 製品 1 ファイル、{product_id} 利用可） */
+    static const std::string& getDLOGFilename();
+    /** @brief 1ファイル最大バイト, 合計最大バイト（0=制限なし）。超えたら警告して書き出しスキップ */
+    static size_t getResultFileMaxBytes();
+    static size_t getResultTotalMaxBytes();
+    /** @brief 最適化終了パラメータを書き出すテキストファイルパス（空なら無効） */
+    static const std::string& getResultFinalParamsFilename();
+
+    /** @brief 実績・予測の種類ごとの最適化使用フラグ（cfg の optimization_data_types=A,B で指定。空なら全種類を使用） */
+    static const std::vector<std::string>& getOptimizationDataTypes();
+    /** @brief 指定したデータ種類を最適化に使うか。リストが空のときは true（全種類使用） */
+    static bool isDataTypeUsedForOptimization(const std::string& data_type_id);
+
+    /** @brief position の有効範囲（0~1）。範囲外の点は最適化対象から外す。cfg の optimization_position_min/max（例: 0.05, 0.95） */
+    static double getOptimizationPositionMin();
+    static double getOptimizationPositionMax();
+
 private:
     static bool traceEnabled_;
     static bool debugEnabled_;
@@ -117,6 +145,20 @@ private:
     static int lmMaxTry_;
     static size_t traceLogMaxBytes_;
     static size_t debugLogMaxBytes_;
+    static std::string plogFilename_;
+    static std::string csvFilenameAfter_;
+    static bool detailEnabled_;
+    static int detailStartIndex_;
+    static int detailMaxPoints_;
+    static bool llogOneFile_;
+    static std::string llogFilename_;
+    static std::string dlogFilename_;
+    static size_t resultFileMaxBytes_;
+    static size_t resultTotalMaxBytes_;
+    static std::string resultFinalParamsFilename_;
+    static std::vector<std::string> optimizationDataTypes_;
+    static double optimizationPositionMin_;
+    static double optimizationPositionMax_;
 };
 
 }  // namespace optimizer

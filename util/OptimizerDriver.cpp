@@ -13,6 +13,7 @@
 #include "product/BatchEvaluationHandler.hpp"
 #include "objective/Objective.hpp"
 #include "core/core.hpp"
+#include "param/param.hpp"
 #include "util/TraceConfig.hpp"
 #include "util/IterationLog.hpp"
 #include "util/LogRotate.hpp"
@@ -20,7 +21,9 @@
 #include "Optimizer/DE/DE.hpp"
 #include "Optimizer/LM/LM.hpp"
 #include <fstream>
+#include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <cmath>
@@ -73,7 +76,7 @@ static void checkRequiredInputs(const std::string& configPath,
     else
         TraceConfig::logDebug("products: NG (empty)");
 
-    if (optimizerName == "PSO" || optimizerName == "DE" || optimizerName == "LM")
+    if (optimizerName == "PSO" || optimizerName == "DE" || optimizerName == "LM" || optimizerName == "INIT" || optimizerName == "DB")
         TraceConfig::logDebug("optimizer name: OK (" + optimizerName + ")");
     else
         TraceConfig::logDebug("optimizer name: NG (unknown: " + optimizerName + ")");
@@ -109,10 +112,36 @@ static std::vector<ProductRunResult> computeProductResults(
         r.residuals.resize(data->measured.size());
         for (size_t i = 0; i < data->measured.size(); ++i)
             r.residuals[i] = data->measured[i] - predicted[i];
+        r.extra_columns = data->extra_columns;
         r.ok = true;
         out.push_back(std::move(r));
     }
     return out;
+}
+
+/** 全製品の残差から RMSE を算出 */
+static double computeRmseFromResults(const std::vector<ProductRunResult>& results) {
+    size_t n = 0;
+    double sumSq = 0.0;
+    for (const auto& r : results) {
+        if (!r.ok) continue;
+        for (double e : r.residuals) {
+            sumSq += e * e;
+            ++n;
+        }
+    }
+    if (n == 0) return 0.0;
+    return std::sqrt(sumSq / static_cast<double>(n));
+}
+
+/** 最終パラメータをストリームへ param_name=value 形式で出力（設定ファイルへコピペ用） */
+static void writeFinalParamsToStream(const ParameterMapper& mapper,
+                                     const std::vector<double>& fullParams,
+                                     std::ostream& out) {
+    const auto& specs = mapper.specs();
+    if (fullParams.size() != specs.size()) return;
+    for (size_t i = 0; i < specs.size(); ++i)
+        out << specs[i].param_name << "=" << fullParams[i] << "\n";
 }
 
 static RunResult runPSO(Objective& objective,
@@ -339,7 +368,22 @@ static RunResult runImpl(ParameterMapper& mapper,
                          const std::string& tracePath,
                          const char* logLabel,
                          int nIterPSO, int nIterDE, int nIterLM,
-                         IResultWriter* resultWriter) {
+                         IResultWriter* resultWriter,
+                         DbValueProvider dbValueProvider) {
+    /* INIT: 設定ファイルの初期値を全パラメータに適用して計算のみ。DB: DB の値を適用。 */
+    if (optimizerName == "INIT" || optimizerName == "DB") {
+        DbValueProvider prov = (optimizerName == "DB") ? dbValueProvider : nullptr;
+        std::vector<double> optParams = mapper.getInitialVector(prov);
+        std::vector<double> fullParams = mapper.expandToFullParameterSet(optParams);
+        std::vector<ProductRunResult> presults = computeProductResults(model, loader, products, fullParams);
+        if (resultWriter)
+            resultWriter->writeApplyOnly(fullParams, presults);
+        RunResult out;
+        out.bestParams = optParams;
+        out.bestScore = computeRmseFromResults(presults);
+        return out;
+    }
+
     ProductRunner runner(model, loader);
     BatchEvaluationHandler batch(runner);
     batch.setProducts(products);
@@ -372,13 +416,25 @@ RunResult OptimizerDriver::run(const std::string& configPath,
                                 const std::string& optimizerName,
                                 const std::string& tracePath,
                                 const char* logLabel,
-                                IResultWriter* resultWriter) {
+                                IResultWriter* resultWriter,
+                                DbValueProvider dbValueProvider) {
     TraceConfig::load(configPath);
     if (TraceConfig::isDebugEnabled())
         checkRequiredInputs(configPath, mapper, products, optimizerName);
-    return runImpl(mapper, model, loader, products, optimizerName, tracePath, logLabel,
-                  TraceConfig::getNIterPso(), TraceConfig::getNIterDe(), TraceConfig::getNIterLm(),
-                  resultWriter);
+    RunResult result = runImpl(mapper, model, loader, products, optimizerName, tracePath, logLabel,
+                               TraceConfig::getNIterPso(), TraceConfig::getNIterDe(), TraceConfig::getNIterLm(),
+                               resultWriter, dbValueProvider);
+    if (!result.bestParams.empty()) {
+        std::vector<double> fullParams = mapper.expandToFullParameterSet(result.bestParams);
+        writeFinalParamsToStream(mapper, fullParams, std::cout);
+        const std::string& outPath = TraceConfig::getResultFinalParamsFilename();
+        if (!outPath.empty()) {
+            std::ofstream f(outPath);
+            if (f)
+                writeFinalParamsToStream(mapper, fullParams, f);
+        }
+    }
+    return result;
 }
 
 RunResult OptimizerDriver::run(const RunConfig& config,
@@ -389,12 +445,25 @@ RunResult OptimizerDriver::run(const RunConfig& config,
                                 const std::string& optimizerName,
                                 const std::string& tracePath,
                                 const char* logLabel,
-                                IResultWriter* resultWriter) {
+                                IResultWriter* resultWriter,
+                                DbValueProvider dbValueProvider) {
     TraceConfig::loadFromStruct(config);
     if (TraceConfig::isDebugEnabled())
         checkRequiredInputs("", mapper, products, optimizerName);
-    return runImpl(mapper, model, loader, products, optimizerName, tracePath, logLabel,
-                  config.n_iter_pso, config.n_iter_de, config.n_iter_lm, resultWriter);
+    RunResult result = runImpl(mapper, model, loader, products, optimizerName, tracePath, logLabel,
+                               config.n_iter_pso, config.n_iter_de, config.n_iter_lm,
+                               resultWriter, dbValueProvider);
+    if (!result.bestParams.empty()) {
+        std::vector<double> fullParams = mapper.expandToFullParameterSet(result.bestParams);
+        writeFinalParamsToStream(mapper, fullParams, std::cout);
+        const std::string& outPath = TraceConfig::getResultFinalParamsFilename();
+        if (!outPath.empty()) {
+            std::ofstream f(outPath);
+            if (f)
+                writeFinalParamsToStream(mapper, fullParams, f);
+        }
+    }
+    return result;
 }
 
 /* USERWORK: dbValueProvider で DB から適用値を取得。resultWriter はオンサイト実装で結果を出力する。 */
