@@ -11,7 +11,7 @@
 
 #include "param/param.hpp"
 #include "util/util_common.hpp"
-#include "util/TraceConfig.hpp"
+#include "util/ParaConfig.hpp"
 #include "util/LogRotate.hpp"
 #include "util/OptimizerDriver.hpp"
 #include "util/IResultWriter.hpp"
@@ -139,7 +139,7 @@ private:
         data->measured.clear();
         data->positions.clear();
         for (const auto& ds : data->data_sets) {
-            if (optimizer::TraceConfig::isDataTypeUsedForOptimization(ds.data_type_id)) {
+            if (optimizer::ParaConfig::isDataTypeUsedForOptimization(ds.data_type_id)) {
                 for (double v : ds.measured) data->measured.push_back(v);
                 for (double p : ds.positions) data->positions.push_back(p);
             }
@@ -149,8 +149,8 @@ private:
     /** cfg の optimization_position_min/max の範囲外の点を除く（範囲外は最適化対象にしない）。position は 0~1 想定。 */
     static void filterByPositionRange(optimizer::ProductLoadedData* data) {
         if (!data || data->positions.size() != data->measured.size()) return;
-        const double lo = optimizer::TraceConfig::getOptimizationPositionMin();
-        const double hi = optimizer::TraceConfig::getOptimizationPositionMax();
+        const double lo = optimizer::ParaConfig::getOptimizationPositionMin();
+        const double hi = optimizer::ParaConfig::getOptimizationPositionMax();
         std::vector<double> m, p;
         for (size_t i = 0; i < data->positions.size(); ++i) {
             if (data->positions[i] >= lo && data->positions[i] <= hi) {
@@ -164,60 +164,139 @@ private:
 };
 
 // =============================================================================
-// 5. OnsiteResultWriter — IResultWriter の実装（任意）
+// 5. PLOG / LLOG / DLOG — ユーザーが作る関数（ここを実装すると CSV が出る）
 // =============================================================================
-// CSV 書き出しは 3 種類。PLOG (product log), LLOG (length log), DLOG (detail log)。
-// PLOG: 1 製品 1 行・列を横に追加。終了時に flushPLOG で 1 ファイルに書き出し。
-// LLOG: 1 製品 1 ブロック縦連結・全製品 1 ファイル  /  DLOG: 1 製品 1 ファイル
-/** 現地実装: 結果をファイル・DB 等へ出力する場合に実装する */
+// ro.PLOG_add(カラム名, 値, 書式), ro.PLOG_endRow() で 1 行。書式は空で自動。
+// ro.LLOG_add(カラム名, 値, 書式), ro.LLOG_endRow() で 1 行。PLOG/LLOG は終了時またはサイズ超過で flush。
+// ro.DLOG_beginProduct(product_id), ro.DLOG_add(カラム名, 値, 書式), ro.DLOG_endRow()。DLOG は endRow 毎に flush。
+// ON/OFF はコンフィグ plog_enabled, llog_enabled, dlog_enabled（para.cfg）。
+//
+/** PLOG を出すか。コンフィグ plog_enabled を読む。ユーザーはここを差し替えてよい。 */
+static bool userPLOGEnabled() { return optimizer::ParaConfig::getPLOGEnabled(); }
+/** PLOG の出力先ファイル名フォーマット。{timestamp}, {product_id} 利用可。 */
+static std::string userPLOGFilename() {
+    std::string s = optimizer::ParaConfig::getPLOGFilename();
+    return s.empty() ? "result/plog_{timestamp}.csv" : s;
+}
+
+/** LLOG を出すか。コンフィグ llog_enabled を読む。 */
+static bool userLLOGEnabled() { return optimizer::ParaConfig::getLLOGEnabled(); }
+/** LLOG の出力先。全製品 1 ファイル。 */
+static std::string userLLOGFilename() { return optimizer::ParaConfig::getLLOGFilename(); }
+/** LLOG の範囲（全製品共通）。start_index, max_points。 */
+static void userLLOGRange(size_t& startIndex, size_t& maxPoints) {
+    int s = optimizer::ParaConfig::getDetailStartIndex();
+    int m = optimizer::ParaConfig::getDetailMaxPoints();
+    startIndex = s >= 0 ? static_cast<size_t>(s) : 0u;
+    maxPoints = m > 0 ? static_cast<size_t>(m) : 256u;
+}
+
+/** DLOG を出すか。コンフィグ dlog_enabled を読む。 */
+static bool userDLOGEnabled() { return optimizer::ParaConfig::getDLOGEnabled(); }
+/** DLOG の出力先。1 製品 1 ファイル。{product_id}, {timestamp} 利用可。 */
+static std::string userDLOGFilename() { return optimizer::ParaConfig::getDLOGFilename(); }
+/** DLOG の製品ごとの (start_index, max_points)。results.size() と一致させる。 */
+static std::vector<std::pair<size_t, size_t>> userDlogRanges(const std::vector<optimizer::ProductRunResult>& results) {
+    std::vector<std::pair<size_t, size_t>> ranges;
+    ranges.reserve(results.size());
+    size_t gStart, gMax;
+    userLLOGRange(gStart, gMax);
+    for (const auto& r : results) {
+        size_t n = r.measured.size();
+        size_t start = (gStart < n) ? gStart : 0u;
+        size_t remain = (start < n) ? (n - start) : 0u;
+        size_t maxPoints = (gMax > 0 && remain > gMax) ? gMax : remain;
+        ranges.push_back({start, maxPoints});
+    }
+    return ranges;
+}
+
+// =============================================================================
+// 5.2 OnsiteResultWriter — IResultWriter（PLOG/LLOG/DLOG は add / endRow で書き込む）
+// =============================================================================
 class OnsiteResultWriter : public optimizer::IResultWriter {
 public:
     OnsiteResultWriter() {
-        ro_.setMaxFileBytes(optimizer::TraceConfig::getResultFileMaxBytes());
-        ro_.setMaxTotalBytes(optimizer::TraceConfig::getResultTotalMaxBytes());
-        const std::string& plogFmt = optimizer::TraceConfig::getPLOGFilename();
-        ro_.setPLOGFilename(plogFmt.empty() ? "result/summary_{timestamp}.csv" : plogFmt);
+        ro_.setMaxFileBytes(optimizer::ParaConfig::getResultFileMaxBytes());
+        ro_.setMaxTotalBytes(optimizer::ParaConfig::getResultTotalMaxBytes());
+        if (userPLOGEnabled() && !userPLOGFilename().empty()) ro_.setPLOGFilename(userPLOGFilename());
+        if (userLLOGEnabled() && !userLLOGFilename().empty()) ro_.setLLOGFilename(userLLOGFilename());
+        if (userDLOGEnabled() && !userDLOGFilename().empty()) ro_.setDLOGFilename(userDLOGFilename());
     }
 
     ~OnsiteResultWriter() {
         ro_.flushPLOG();
+        ro_.flushLLOG();
     }
 
     void writeApplyOnly(const std::vector<double>& fullParams,
                         const std::vector<optimizer::ProductRunResult>& results) override {
         (void)fullParams;
-        ro_.writePLOG(results, "rmse_apply");
-        // LLOG/DLOG は最適化後のみ出力（writeAfterOptimization で 1 回）
+        if (userPLOGEnabled())
+            ro_.writePLOG(results, "rmse_apply");  // 列を横に追加。PLOG_add/PLOG_endRow で自前の列も可。
     }
 
     void writeAfterOptimization(const std::vector<double>& fullParams,
                                 const std::vector<optimizer::ProductRunResult>& results) override {
         (void)fullParams;
-        ro_.writePLOG(results, "rmse_after");
-        if (optimizer::TraceConfig::getDetailEnabled()) {
-            ro_.writeLLOG(results, detailStart(), detailMaxPoints(),
-                          optimizer::TraceConfig::getLLOGFilename());
-            ro_.writeDLOG(results, detailStart(), detailMaxPoints(),
-                          optimizer::TraceConfig::getDLOGFilename());
+        if (userPLOGEnabled())
+            ro_.writePLOG(results, "rmse_after");
+
+        if (userLLOGEnabled() && !userLLOGFilename().empty()) {
+            size_t startIndex, maxPoints;
+            userLLOGRange(startIndex, maxPoints);
+            for (const auto& r : results) {
+                if (!r.ok) continue;
+                size_t n = r.measured.size();
+                for (size_t k = 0; k < maxPoints && startIndex + k < n; ++k) {
+                    size_t idx = startIndex + k;
+                    ro_.LLOG_add("product_id", r.product_id, "");
+                    ro_.LLOG_add("point_index", static_cast<int>(k), "");
+                    ro_.LLOG_add("measured", r.measured[idx], "");
+                    ro_.LLOG_add("predicted", r.predicted[idx], "");
+                    ro_.LLOG_add("residual", r.residuals[idx], "");
+                    for (const auto& p : r.extra_columns)
+                        ro_.LLOG_add(p.first, p.second, "");
+                    ro_.LLOG_endRow();
+                }
+            }
+        }
+
+        if (userDLOGEnabled() && !userDLOGFilename().empty()) {
+            std::vector<std::pair<size_t, size_t>> ranges = userDlogRanges(results);
+            if (ranges.size() != results.size()) return;
+            for (size_t ri = 0; ri < results.size(); ++ri) {
+                const auto& r = results[ri];
+                if (!r.ok) continue;
+                ro_.DLOG_beginProduct(r.product_id);
+                size_t startIndex = ranges[ri].first;
+                size_t maxPoints = ranges[ri].second;
+                size_t n = r.measured.size();
+                for (size_t k = 0; k < maxPoints && startIndex + k < n; ++k) {
+                    size_t idx = startIndex + k;
+                    ro_.DLOG_add("product_id", r.product_id, "");
+                    ro_.DLOG_add("point_index", static_cast<int>(k), "");
+                    ro_.DLOG_add("measured", r.measured[idx], "");
+                    ro_.DLOG_add("predicted", r.predicted[idx], "");
+                    ro_.DLOG_add("residual", r.residuals[idx], "");
+                    for (const auto& p : r.extra_columns)
+                        ro_.DLOG_add(p.first, p.second, "");
+                    ro_.DLOG_endRow();
+                }
+            }
         }
     }
 
 private:
     optimizer::RO ro_;
-
-    static size_t detailStart() {
-        int v = optimizer::TraceConfig::getDetailStartIndex();
-        return v >= 0 ? static_cast<size_t>(v) : 0u;
-    }
-    static size_t detailMaxPoints() {
-        int v = optimizer::TraceConfig::getDetailMaxPoints();
-        return v > 0 ? static_cast<size_t>(v) : 256u;
-    }
 };
 
 // =============================================================================
-// 6. CSV 書き出し例（RO = ResultOutput の使い方）
+// 6. 汎用 CSV 書き出し例（RO = ResultOutput の 2 タイミング同一ファイル追記）
 // =============================================================================
+// PLOG/LLOG/DLOG は「5. ユーザーが作る関数」の userPLOGFilename / userLLOGConfig / userDLOGFilename / userDlogRanges を実装すると出る。
+// 以下はそれとは別の、汎用の addColumn/endRow/flush の例。
+//
 // 実行すると result/example_onsite_{timestamp}.csv にサンプルが出力される。
 // PLOG と同様に、setFilenameSame → 行追加 → flush(Before) → 行追加 → flush(After) で同一ファイルに追記。
 /** RO を使った CSV 書き出しの最小例 */
@@ -262,17 +341,17 @@ int main() {
 
     Handler handler(configPath);
     optimizer::DataConfig::load(configPath);
-    if (!optimizer::TraceConfig::isOptimizerListValid()) {
-        optimizer::TerminalMessage::error(optimizer::TraceConfig::getOptimizerListError());
+    if (!optimizer::ParaConfig::isOptimizerListValid()) {
+        optimizer::TerminalMessage::error(optimizer::ParaConfig::getOptimizerListError());
         return 1;
     }
 
-    if (optimizer::TraceConfig::isTraceEnabled() || optimizer::TraceConfig::isDebugEnabled())
+    if (optimizer::ParaConfig::isTraceEnabled() || optimizer::ParaConfig::isDebugEnabled())
         ensureLogDir();
     static std::ofstream s_debugLog;
-    if (optimizer::TraceConfig::isDebugEnabled()) {
-        if (optimizer::openLogWithRotation("log/debug.log", s_debugLog, optimizer::TraceConfig::getDebugLogMaxBytes()))
-            optimizer::TraceConfig::setDebugStream(&s_debugLog);
+    if (optimizer::ParaConfig::isDebugEnabled()) {
+        if (optimizer::openLogWithRotation("log/debug.log", s_debugLog, optimizer::ParaConfig::getDebugLogMaxBytes()))
+            optimizer::ParaConfig::setDebugStream(&s_debugLog);
     }
 
     optimizer::ParameterMapper mapper;
@@ -293,7 +372,7 @@ int main() {
     optimizer::OptimizerDriver::runApplyOnly(mapper, model, loader, products, nullptr, resultWriter);
 
     const std::string optimizerName = handler.getOptimizersToRun()[0];
-    std::string tracePath = optimizer::TraceConfig::isTraceEnabled() ? "log/onsite_trace.csv" : "";
+    std::string tracePath = optimizer::ParaConfig::isTraceEnabled() ? "log/onsite_trace.csv" : "";
     optimizer::RunResult result = optimizer::OptimizerDriver::run(
         configPath, mapper, model, loader, products, optimizerName,
         tracePath, "onsite", &resultWriter);

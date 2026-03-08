@@ -37,7 +37,7 @@ optimizer/
 │   ├── Demo.h, Demo.cpp   # デモ用 3 モデル・3 ローダ
 │   └── demo_main.cpp      # デモ実行（make demo）
 ├── Optimizer/             # 最適化器（Optimizer 基底 + PSO/, LM/, DE/）
-├── util/                  # TraceConfig, IterationLog, Handler（設定で最適化器切り替え）
+├── util/                  # ParaConfig, IterationLog, Handler（設定で最適化器切り替え）
 └── tests/                 # 追加テスト（ParameterMapper, ProductRunner, Batch, Objective, 接続）
 ```
 

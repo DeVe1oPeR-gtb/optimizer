@@ -26,11 +26,9 @@ TEST_GROUP(DE_SOT) {
 };
 
 TEST_GROUP(DE_AOT) {
-    DE<double> *de;
-    void setup() {
-        
-    }
-    void teardown() { delete de; }
+    DE<double> *de = nullptr;
+    void setup() { de = nullptr; }
+    void teardown() { delete de; de = nullptr; }
 };
 
 TEST(DE_SOT, Create) {

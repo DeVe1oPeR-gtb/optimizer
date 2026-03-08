@@ -11,4 +11,4 @@ IMPORT_TEST_GROUP(Objective);
 IMPORT_TEST_GROUP(OptimizerConnection);
 IMPORT_TEST_GROUP(ProductLogBuffer);
 IMPORT_TEST_GROUP(ResultOutput_PLOG);
-IMPORT_TEST_GROUP(TraceConfig_ResultKeys);
+IMPORT_TEST_GROUP(ParaConfig_ResultKeys);

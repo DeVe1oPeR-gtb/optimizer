@@ -61,7 +61,7 @@
 ## 推奨プログラム起動フロー
 
 1. **設定読込**  
-   `TraceConfig::load(configPath)` の後、`DataConfig::load(configPath)` で同じ para.cfg を読む。
+   `ParaConfig::load(configPath)` の後、`DataConfig::load(configPath)` で同じ para.cfg を読む。
 
 2. **コイルリスト読込**  
    `DataConfig::getXcoilFilePath()` のパスで `loadCoilListFromFile(..., coils)` を呼び、`vector<CoilEntry> coils` を取得。

@@ -5,7 +5,7 @@
 
 #include "param/param.hpp"
 #include "util/util_common.hpp"
-#include "util/TraceConfig.hpp"
+#include "util/ParaConfig.hpp"
 #include "util/LogRotate.hpp"
 #include "util/OptimizerDriver.hpp"
 #include "mock/Demo.hpp"
@@ -58,17 +58,17 @@ int main() {
     const std::string configPath = "config/para.cfg";
     Handler handler(configPath);
     optimizer::DataConfig::load(configPath);
-    if (!optimizer::TraceConfig::isOptimizerListValid()) {
-        optimizer::TerminalMessage::error(optimizer::TraceConfig::getOptimizerListError());
+    if (!optimizer::ParaConfig::isOptimizerListValid()) {
+        optimizer::TerminalMessage::error(optimizer::ParaConfig::getOptimizerListError());
         return 1;
     }
     ensureResultDir();
-    if (optimizer::TraceConfig::isTraceEnabled() || optimizer::TraceConfig::isDebugEnabled())
+    if (optimizer::ParaConfig::isTraceEnabled() || optimizer::ParaConfig::isDebugEnabled())
         ensureLogDir();
     static std::ofstream s_debugLog;
-    if (optimizer::TraceConfig::isDebugEnabled()) {
-        if (optimizer::openLogWithRotation("log/debug.log", s_debugLog, optimizer::TraceConfig::getDebugLogMaxBytes()))
-            optimizer::TraceConfig::setDebugStream(&s_debugLog);
+    if (optimizer::ParaConfig::isDebugEnabled()) {
+        if (optimizer::openLogWithRotation("log/debug.log", s_debugLog, optimizer::ParaConfig::getDebugLogMaxBytes()))
+            optimizer::ParaConfig::setDebugStream(&s_debugLog);
     }
 
     std::vector<optimizer::CoilEntry> coils;
@@ -148,7 +148,7 @@ int main() {
                 << r.p0 << "," << r.p1 << "," << r.p2 << "," << r.n_iter << "\n";
 
     std::cout << "[Demo] " << summary.size() << " runs done. result/summary.csv written.";
-    if (optimizer::TraceConfig::isTraceEnabled())
+    if (optimizer::ParaConfig::isTraceEnabled())
         std::cout << " Trace logs in log/.";
     std::cout << "\n";
     return 0;

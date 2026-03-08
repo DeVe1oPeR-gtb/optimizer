@@ -1,8 +1,8 @@
-#ifndef OPTIMIZER_UTIL_TRACE_CONFIG_H
-#define OPTIMIZER_UTIL_TRACE_CONFIG_H
+#ifndef OPTIMIZER_UTIL_PARA_CONFIG_H
+#define OPTIMIZER_UTIL_PARA_CONFIG_H
 
 /**
- * @file TraceConfig.h
+ * @file ParaConfig.hpp
  * @brief 最適化まわりの設定（trace, optimizer, 各最適化器のパラメータ）の読込と取得。
  */
 
@@ -20,7 +20,7 @@ namespace optimizer {
  * trace, optimizer, lm_apply_bounds, n_iter_*, pso_*, de_*, lm_* を解釈。
  * 1行に複数指定する場合は key=val を ; で区切る（試行錯誤用にコピペしやすい）。
  */
-class TraceConfig {
+class ParaConfig {
 public:
     /** @brief 設定ファイルを読み、全パラメータを更新 */
     static void load(const std::string& path = "config/para.cfg");
@@ -87,6 +87,10 @@ public:
     static double getLmLambdaUp();
     static int getLmMaxTry();
 
+    /** @brief PLOG / LLOG / DLOG の書き出し ON/OFF。コンフィグで plog_enabled, llog_enabled, dlog_enabled */
+    static bool getPLOGEnabled();
+    static bool getLLOGEnabled();
+    static bool getDLOGEnabled();
     /** @brief PLOG 出力先ファイル名フォーマット（空なら無効）。{timestamp}, {product_id} 等利用可 */
     static const std::string& getPLOGFilename();
     /** @brief 汎用 CSV 最適化後ファイル名（2 タイミング書き出しの後用）。空なら無効 */
@@ -114,6 +118,9 @@ public:
     /** @brief position の有効範囲（0~1）。範囲外の点は最適化対象から外す。cfg の optimization_position_min/max（例: 0.05, 0.95） */
     static double getOptimizationPositionMin();
     static double getOptimizationPositionMax();
+
+    /** @brief テスト用: load() で設定した静的文字列・vector をクリアし、リーク検出前にメモリを解放する */
+    static void resetForTest();
 
 private:
     static bool traceEnabled_;
@@ -145,6 +152,9 @@ private:
     static int lmMaxTry_;
     static size_t traceLogMaxBytes_;
     static size_t debugLogMaxBytes_;
+    static bool plogEnabled_;
+    static bool llogEnabled_;
+    static bool dlogEnabled_;
     static std::string plogFilename_;
     static std::string csvFilenameAfter_;
     static bool detailEnabled_;
@@ -163,4 +173,4 @@ private:
 
 }  // namespace optimizer
 
-#endif  // OPTIMIZER_UTIL_TRACE_CONFIG_H
+#endif  // OPTIMIZER_UTIL_PARA_CONFIG_H

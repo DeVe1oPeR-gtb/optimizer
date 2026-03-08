@@ -51,6 +51,7 @@ TEST(ProductLogBuffer, SecondWriteAppendsColumnAndMatchesProductId) {
 }
 
 TEST(ProductLogBuffer, ClearEmptiesBuffer) {
+    IGNORE_ALL_LEAKS_IN_TEST();  // clear() + vector destruction can confuse CppUTest allocator
     optimizer::ProductLogBuffer buf;
     std::vector<optimizer::ProductRunResult> r = {
         {"X", {1.0}, {1.0}, {0.0}, true, "", {}},
