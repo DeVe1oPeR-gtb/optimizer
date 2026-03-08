@@ -28,6 +28,18 @@
 - **OptimizerDriver::run(...)** に、設定（ファイルパスまたは `RunConfig`）、**1 本の ParameterMapper**、model、loader、製品リスト、最適化器名を渡すと 1 回分の最適化を実行し `RunResult`（最良スコア・パラメータ）を返す。現場の main は PSO/DE/LM を include せず、この API だけ呼べばよい。
 - 設定をファイルに依存させない場合は `RunConfig` に `trace_enabled`・`optimizer_names`・反復数を詰めて `OptimizerDriver::run(config, mapper, ...)` を呼ぶ。
 
+## オンサイトのヘッダを include する場所
+
+- **本リポジトリ（para）の既存 .cpp には、オンサイト専用ヘッダ（common_glb.hxx 等）を include しない。**  
+  OptimizerDriver 等はインターフェース（IPhysicalModel.h, IProductDataLoader.h, IResultWriter.h）だけ参照し、実装は呼び出し側が渡す。
+- **オンサイトで追加するソースファイル**の先頭で、必要な現場ヘッダを include する。
+  - **現場の main**（エントリ）: `util/OptimizerDriver.h` と、自前のモデル／ローダ／ResultWriter の**実装ヘッダ**を include。common を直接触らないなら common の include は不要。
+  - **IPhysicalModel 実装**（例: sim/compat_model.cpp）: 現場の common や物理モデル用ヘッダを include。
+  - **IProductDataLoader 実装**（例: sim/compat_data.cpp）: common や DB 読込用ヘッダを include。
+  - **IResultWriter 実装**: 現場の出力形式用ヘッダを include。
+
+（構成案の詳細は docs/ONSITE_LAYOUT_PROPOSAL.md 参照。）
+
 ## 結果出力（オンサイトで実装）
 
 - **IResultWriter** を実装し、`writeApplyOnly` と `writeAfterOptimization` で現場仕様のファイル・DB 等に書き出す。

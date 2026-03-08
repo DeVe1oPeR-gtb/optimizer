@@ -6,6 +6,7 @@
 #include "param/param.hpp"
 #include "util/util_common.hpp"
 #include "util/TraceConfig.hpp"
+#include "util/LogRotate.hpp"
 #include "util/OptimizerDriver.hpp"
 #include "mock/Demo.hpp"
 #include <iostream>
@@ -58,8 +59,13 @@ int main() {
     Handler handler(configPath);
     optimizer::DataConfig::load(configPath);
     ensureResultDir();
-    if (optimizer::TraceConfig::isTraceEnabled())
+    if (optimizer::TraceConfig::isTraceEnabled() || optimizer::TraceConfig::isDebugEnabled())
         ensureLogDir();
+    static std::ofstream s_debugLog;
+    if (optimizer::TraceConfig::isDebugEnabled()) {
+        if (optimizer::openLogWithRotation("log/debug.log", s_debugLog, optimizer::TraceConfig::getDebugLogMaxBytes()))
+            optimizer::TraceConfig::setDebugStream(&s_debugLog);
+    }
 
     std::vector<optimizer::CoilEntry> coils;
     const std::string xcoilPath = optimizer::DataConfig::getXcoilFilePath();

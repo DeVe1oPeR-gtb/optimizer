@@ -205,6 +205,17 @@ TEST(PSO_AOT, DEMO) {
     static double csv_z5[NUMAX][NOZ];
     static double csv_bestz5[NUMAX][NOZ];
     static double csv_z5v[NUMAX][NOZ];
+    (void)csv_nu;
+    (void)csv_gb_mean;
+    (void)csv_gb_sig;
+    (void)csv_gb_rmse;
+    (void)csv_gb_pos;
+    (void)csv_p_pos;
+    (void)csv_bp_pos;
+    (void)csv_p_rmse;
+    (void)csv_z5;
+    (void)csv_bestz5;
+    (void)csv_z5v;
     ////////////////////////////////////////////////////////////////////////
 
     // サンプルデータ
@@ -344,12 +355,10 @@ TEST(PSO_AOT, DEMO) {
 
             bool out_exec = false;
             int ic        = 0;
-            int idx       = 0;
             for (ic = 0; ic < NOP; ++ic) {
                 if (ip == csv_out_pno[ic]) {
                     out_exec = true;
                     break;
-                    idx = csv_out_pno[ic];
                 }
             }
             if (!out_exec)

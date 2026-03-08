@@ -110,8 +110,7 @@ TEST(DE_AOT, DEMO) {
                 eval_data[i] = std::make_pair(y[i], fz[i]);
             }
             de->setEvalData(ip, eval_data);
-            Optimizer::Stats<double> stats = de->calcScore(ip);
-            // mutants[ip].score = stats.rmse;
+            (void)de->calcScore(ip);
         }
         de->selection();
         if(ik == NUMAX - 1) break;

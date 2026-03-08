@@ -88,6 +88,8 @@ $(BUILD)/util_CoilList.o: util/CoilList.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 $(BUILD)/util_CoilDataPath.o: util/CoilDataPath.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+$(BUILD)/util_LogRotate.o: util/LogRotate.cpp | $(BUILD)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 # mock（テスト用モック + デモ用モデル・ローダ・エントリ）
 $(BUILD)/mock_Demo.o: mock/Demo.cpp | $(BUILD)
 	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -c $< -o $@
@@ -129,4 +131,25 @@ demo: $(BUILD)/Demo
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all test demo clean
+.PHONY: all test demo clean onsite
+# --- Onsite（scripts/setup_onsite.sh で Makefile に追記）---
+$(BUILD)/onsite_main_onsite.o: onsite/main_onsite.cpp | $(BUILD)
+	$(CXX) $(CXXSTD) -g -Wall $(INC_DEMO) -Ionsite -c $< -o $@
+
+ONSITE_OBJ_LIST = $(BUILD)/Optimizer_Optimizer.o $(BUILD)/PSO_PSO.o $(BUILD)/LM_LM.o $(BUILD)/DE_DE.o \
+	$(BUILD)/param_ParamSpec.o $(BUILD)/param_CsvParamLoader.o $(BUILD)/param_ParameterMapper.o \
+	$(BUILD)/product_ProductRunner.o $(BUILD)/product_BatchEvaluationHandler.o \
+	$(BUILD)/objective_Objective.o $(BUILD)/util_TraceConfig.o $(BUILD)/util_IterationLog.o \
+	$(BUILD)/util_Handler.o $(BUILD)/util_OptimizerDriver.o $(BUILD)/util_LogRotate.o \
+	$(BUILD)/util_TerminalMessage.o $(BUILD)/util_DataConfig.o $(BUILD)/util_CoilList.o $(BUILD)/util_CoilDataPath.o \
+	$(BUILD)/onsite_main_onsite.o
+$(BUILD)/Onsite: $(ONSITE_OBJ_LIST)
+	$(CXX) $(CXXSTD) -o $@ $^
+
+onsite: $(BUILD)/Onsite
+	@echo "--- run Onsite ---"
+	$(BUILD)/Onsite
+
+# 統合ビルド用: .o のみビルド（integrate_project.sh から利用）
+onsite-objs: $(ONSITE_OBJ_LIST)
+.PHONY: onsite-objs

@@ -1,0 +1,108 @@
+/*
+ * オンサイト用メイン。このファイルだけ編集し、setup 実行後に make onsite でビルド・実行する。
+ *
+ * USERWORK:
+ * - makeSpecs(): CSV または現場設定から ParamSpec を組み立てる
+ * - OnsiteModel: IPhysicalModel の実装を現場の物理モデルに差し替え（または compat_model を include）
+ * - OnsiteLoader: IProductDataLoader の実装を現場のデータ読込に差し替え（または compat_data を include）
+ * - 製品リスト: 現場のコイル/製品一覧から ProductMeta を組み立てる
+ * - 必要なら IResultWriter を実装し、OptimizerDriver::run(..., resultWriter) で渡す
+ */
+
+#include "param/param.hpp"
+#include "util/util_common.hpp"
+#include "util/TraceConfig.hpp"
+#include "util/OptimizerDriver.hpp"
+#include "model/IPhysicalModel.hpp"
+#include "model/IProductDataLoader.hpp"
+#include "product/ProductMeta.hpp"
+#include "product/ProductLoadedData.hpp"
+#include <iostream>
+#include <memory>
+#include <vector>
+#include <cmath>
+
+namespace {
+
+// ========== USERWORK: 以下を現場実装に差し替える ==========
+
+/** 最適化するパラメータの仕様（CSV や現場設定から組み立てる） */
+static std::vector<optimizer::ParamSpec> makeSpecs() {
+    return {
+        {"p0", 1, optimizer::InitMode::Manual, 1.0, "", -5.0, 5.0, ""},
+        {"p1", 1, optimizer::InitMode::Manual, -0.5, "", -5.0, 5.0, ""},
+        {"p2", 1, optimizer::InitMode::Manual, 0.1, "", -5.0, 5.0, ""},
+    };
+}
+
+/** 製品メタのリスト（現場のコイル一覧などから組み立てる） */
+static std::vector<optimizer::ProductMeta> makeProducts() {
+    return {{"product1", ""}};
+}
+
+// --- スタブ: 現場で IPhysicalModel 実装に差し替え ---
+/** サンプル用スタブ（y = p0 + p1*x + p2*x^2）。現場では compat_model 等に差し替え */
+class OnsiteModel : public optimizer::IPhysicalModel {
+public:
+    std::vector<double> run(const std::vector<double>& fullParams,
+                             const void* productLoadedData) override {
+        const auto* data = static_cast<const optimizer::ProductLoadedData*>(productLoadedData);
+        if (!data || data->positions.empty()) return {};
+        std::vector<double> pred(data->positions.size());
+        for (size_t i = 0; i < data->positions.size(); ++i) {
+            double x = data->positions[i];
+            pred[i] = fullParams[0] + fullParams[1] * x + fullParams[2] * x * x;
+        }
+        return pred;
+    }
+};
+
+// --- スタブ: 現場で IProductDataLoader 実装に差し替え ---
+/** サンプル用スタブ（固定の 3 点）。現場では compat_data 等に差し替え */
+class OnsiteLoader : public optimizer::IProductDataLoader {
+public:
+    std::unique_ptr<optimizer::ProductLoadedData> load(const optimizer::ProductMeta& meta) override {
+        auto data = std::make_unique<optimizer::ProductLoadedData>();
+        data->measured = {1.0 - 0.5 * 0.5 + 0.1 * 0.25, 1.0 - 0.5 * 1.0 + 0.1 * 1.0, 1.0 - 0.5 * 1.5 + 0.1 * 2.25};
+        data->positions = {0.5, 1.0, 1.5};
+        return data;
+    }
+};
+
+}  // namespace
+
+int main() {
+    const std::string configPath = "config/para.cfg";
+
+    Handler handler(configPath);
+    optimizer::DataConfig::load(configPath);
+
+    optimizer::ParameterMapper mapper;
+    mapper.setSpecs(makeSpecs());
+    std::string err;
+    if (!mapper.validate(err)) {
+        optimizer::TerminalMessage::error("ParameterMapper: " + err);
+        return 1;
+    }
+
+    OnsiteModel model;
+    OnsiteLoader loader;
+    std::vector<optimizer::ProductMeta> products = makeProducts();
+
+    // 1 つの最適化器で 1 回実行（PSO）。必要に応じて DE/LM や複数製品・複数モデルに拡張
+    const std::string optimizerName = handler.getOptimizersToRun().empty()
+                                          ? "PSO"
+                                          : handler.getOptimizersToRun()[0];
+    std::string tracePath = optimizer::TraceConfig::isTraceEnabled() ? "log/onsite_trace.csv" : "";
+    optimizer::RunResult result = optimizer::OptimizerDriver::run(
+        configPath, mapper, model, loader, products, optimizerName,
+        tracePath, "onsite");
+
+    std::cout << "[Onsite] optimizer=" << optimizerName
+              << " bestScore=" << result.bestScore
+              << " bestParams=";
+    for (size_t i = 0; i < result.bestParams.size(); ++i)
+        std::cout << (i ? "," : "") << result.bestParams[i];
+    std::cout << "\n";
+    return 0;
+}

@@ -7,6 +7,7 @@
  */
 
 #include "util/util_common.hpp"
+#include <cstddef>
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -29,6 +30,21 @@ public:
 
     /** @brief トレース出力が有効か */
     static bool isTraceEnabled();
+
+    /** @brief デバッグログが有効か（cfg の debug=on で true）。trace とは別。 */
+    static bool isDebugEnabled();
+
+    /** @brief デバッグログ出力先（nullptr のときは stderr に出力）。caller が setDebugStream で設定可能。 */
+    static std::ostream* getDebugStream();
+    static void setDebugStream(std::ostream* s);
+
+    /** @brief デバッグが有効なときのみメッセージをログ出力（改行付き）。出力先は getDebugStream()、未設定時は stderr。 */
+    static void logDebug(const std::string& message);
+
+    /** @brief トレースログのローテート閾値（バイト）。このサイズ以上で .bak に退避してから新規に開く。0 でローテートなし。 */
+    static size_t getTraceLogMaxBytes();
+    /** @brief デバッグログのローテート閾値（バイト）。同上。 */
+    static size_t getDebugLogMaxBytes();
 
     /** @brief LM でパラメータ上下限を適用するか（para.cfg の lm_apply_bounds） */
     static bool isLmApplyBoundsEnabled();
@@ -69,7 +85,9 @@ public:
 
 private:
     static bool traceEnabled_;
+    static bool debugEnabled_;
     static std::ostream* traceStream_;
+    static std::ostream* debugStream_;
     static std::vector<std::string> optimizersToRun_;
     static bool lmApplyBoundsEnabled_;
     static int nIterPso_;
@@ -91,6 +109,8 @@ private:
     static double lmLambdaDown_;
     static double lmLambdaUp_;
     static int lmMaxTry_;
+    static size_t traceLogMaxBytes_;
+    static size_t debugLogMaxBytes_;
 };
 
 }  // namespace optimizer

@@ -44,8 +44,7 @@ TEST(LM_SOT, Create) {
     double x[3] = {1., 2., 3.};
     double p[3] = {1., 2., 3.};
     for (int i = 0; i < 3; i++) {
-        double fz = y_cal_fz(3, x[i], p);
-        // printf("fz:%5.2f\n", fz);
+        (void)y_cal_fz(3, x[i], p);
     }
     // FAIL("Start here..");
 }
@@ -86,9 +85,9 @@ TEST(LM_AOT, DEMO) {
         }
         levm->setEvalData(eval_data);
 
-        double mean = levm->getStats().mean;
-        double std = levm->getStats().std_dev;
-        double rmse = levm->getStats().rmse;
+        (void)levm->getStats().mean;
+        (void)levm->getStats().std_dev;
+        (void)levm->getStats().rmse;
 ////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////
 //         if(ik == 0){
