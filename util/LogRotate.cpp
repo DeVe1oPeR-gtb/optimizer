@@ -23,6 +23,7 @@ namespace optimizer {
 static size_t getFileSize(const std::string& path) {
     struct stat st;
     if (stat(path.c_str(), &st) != 0) return 0;
+    // ディレクトリやシンボリックリンクは対象外。通常ファイルのサイズだけ返すため。
     if (!S_ISREG(st.st_mode)) return 0;
     return static_cast<size_t>(st.st_size);
 }
@@ -30,6 +31,7 @@ static size_t getFileSize(const std::string& path) {
 bool openLogWithRotation(const std::string& path, std::ofstream& out, size_t maxBytes) {
     if (path.empty()) return false;
 
+    // ログが maxBytes を超えていたら .bak に退避してから新規に開く。肥大化を防ぐため。
     if (maxBytes > 0) {
         size_t sz = getFileSize(path);
         if (sz >= maxBytes) {

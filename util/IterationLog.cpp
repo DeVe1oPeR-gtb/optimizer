@@ -12,7 +12,6 @@ void logIterationTo(int iteration, double score,
                     const std::vector<double>& position,
                     std::ostream& out,
                     const char* label) {
-    /* フォーマットは必要に応じてここで変更してください */
     if (label && *label)
         out << "[" << label << "] ";
     out << "iter=" << iteration << " score=" << score;
@@ -38,6 +37,7 @@ void logIterationWithStats(int iteration, double mean, double rmse,
                            const char* label) {
     if (label && *label)
         std::cout << "[" << label << "] ";
+    // mean/rmse を出すのは LM など統計を表示したい最適化器用。PSO は score のみで logIteration を使う。
     std::cout << "iter=" << iteration << " mean=" << mean << " rmse=" << rmse;
     if (!position.empty()) {
         std::cout << " pos=(";

@@ -43,6 +43,7 @@ int loadCoilListFromFile(const std::string& path, std::vector<CoilEntry>& out) {
         out.push_back(e);
         ++count;
     }
+    // 読み込んだ件数を返す。呼び出し側で 0 件とファイル未存在を区別できるように -1 はエラー。
     return count;
 }
 

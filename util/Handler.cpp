@@ -7,11 +7,13 @@
 #include "util/ParaConfig.hpp"
 
 Handler::Handler(const std::string& configPath) {
+    // デモ/オンサイトで optimizer= を読むため、起動時に para.cfg を ParaConfig に読ませる。
     optimizer::ParaConfig::load(configPath);
 }
 
 Handler::~Handler() {}
 
 std::vector<std::string> Handler::getOptimizersToRun() const {
+    // 設定はコンストラクタで load 済み。PSO/DE/LM のリストをそのまま返す。
     return optimizer::ParaConfig::getOptimizersToRun();
 }

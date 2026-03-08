@@ -62,7 +62,7 @@ double ParaConfig::optimizationPositionMax_ = 1.0;
 
 void ParaConfig::loadFromStruct(const RunConfig& config) {
     traceEnabled_ = config.trace_enabled;
-    /* debug は loadFromStruct では変更しない（cfg の debug= のみ） */
+    // debug は loadFromStruct では変更しない。ファイルの debug= だけがデバッグログを有効にするため。
     if (config.optimizer_names.empty()) {
         optimizersToRun_.clear();
         optimizerListValid_ = false;
@@ -369,6 +369,7 @@ double ParaConfig::getOptimizationPositionMin() { return optimizationPositionMin
 double ParaConfig::getOptimizationPositionMax() { return optimizationPositionMax_; }
 
 void ParaConfig::resetForTest() {
+    // テスト後のリーク検出で静的な string/vector が残らないよう解放する。shrink_to_fit で CppUTest に返す。
     optimizersToRun_.clear();
     optimizersToRun_.shrink_to_fit();
     optimizerListValid_ = false;

@@ -21,6 +21,7 @@ void error(const std::string& message) {
     std::cerr << message;
     if (!message.empty() && message.back() != '\n')
         std::cerr << '\n';
+    // エラーは stderr に出す。パイプやリダイレクト時も標準出力と分離するため。
     std::cerr.flush();
 }
 

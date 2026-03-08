@@ -12,6 +12,7 @@
 
 namespace optimizer {
 
+// デモ用の 2 次多項式モデル。pred = p0 + p1*x + p2*x^2。現場では IPhysicalModel を実装に差し替える。
 static std::vector<double> runQuadratic(const std::vector<double>& fullParams,
                                         const void* productLoadedData) {
     const auto* data = static_cast<const ProductLoadedData*>(productLoadedData);
@@ -64,6 +65,7 @@ std::unique_ptr<ProductLoadedData> DemoDataLoader::load(const ProductMeta&) {
     const size_t n = 10;
     data->positions.resize(n);
     data->measured.resize(n);
+    // デモ用に 1.0 - 0.5*x + 0.1*x^2 で measured を生成。runQuadratic と合わせると最適化で再現できる。
     for (size_t i = 0; i < n; ++i) {
         double x = static_cast<double>(i);
         data->positions[i] = x;

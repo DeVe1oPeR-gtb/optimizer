@@ -23,6 +23,7 @@ ResultOutput::~ResultOutput() {
 }
 
 static std::string escapeCsvCell(const std::string& s) {
+    // カンマ・ダブルクォート・改行が無ければそのまま返す。CSV の仕様に合わせて必要時だけクォートするため。
     if (s.find(',') == std::string::npos && s.find('"') == std::string::npos && s.find('\n') == std::string::npos)
         return s;
     std::ostringstream out;
@@ -217,6 +218,7 @@ void ResultOutput::flush(ResultTiming timing) {
     if (path.empty()) return;
     path = replacePlaceholders(path, "");
     const bool sameFile = (path == lastPathWithHeader_);
+    // 前後で同じファイルに出す場合は追記。ヘッダは Before のときだけ書き、After では行だけ追加するため。
     if (timing == ResultTiming::AfterOptimization && sameFile) {
         writeRowsAppend(path);
         lastPathWithHeader_.clear();
@@ -401,6 +403,7 @@ void ResultOutput::setDLOGFilename(const std::string& format) { dlogFilenameForm
 void ResultOutput::DLOG_beginProduct(const std::string& product_id) {
     dlogCurrentProductId_ = product_id;
     dlogCurrentPath_ = replacePlaceholders(dlogFilenameFormat_, product_id);
+    // 1 製品 1 ファイルなので、製品が変わるたびに前のファイルを閉じてから新パスを開く。
     if (dlogFile_.is_open()) dlogFile_.close();
     dlogCurrentRow_.clear();
 }

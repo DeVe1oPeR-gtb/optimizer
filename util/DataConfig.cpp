@@ -27,6 +27,7 @@ void DataConfig::load(const std::string& path) {
             if (!std::isspace(static_cast<unsigned char>(line[i]))) key += line[i];
         for (size_t i = eq + 1; i < line.size(); ++i)
             if (!std::isspace(static_cast<unsigned char>(line[i]))) val += line[i];
+        // コイルデータ用は para.cfg の一部キーのみ解釈。他は ParaConfig が担当する。
         if (key == "xcoil_file") {
             xcoilFilePath_ = val;
         } else if (key == "data_path") {
