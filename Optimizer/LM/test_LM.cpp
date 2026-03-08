@@ -31,12 +31,9 @@ TEST_GROUP(LM_SOT) {
 };
 
 TEST_GROUP(LM_AOT) {
-    LM<double> *levm;
-    void setup() {
-    }
-    void teardown() {
-        delete levm;
-    }
+    LM<double> *levm = nullptr;
+    void setup() { levm = nullptr; }
+    void teardown() { delete levm; levm = nullptr; }
 };
 
 TEST(LM_SOT, Create) {

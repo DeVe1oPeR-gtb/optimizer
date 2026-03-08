@@ -4,6 +4,7 @@
  */
 
 #include "util/ProductLogBuffer.hpp"
+#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <sstream>
@@ -53,9 +54,38 @@ void ProductLogBuffer::write(const std::vector<ProductRunResult>& results, const
     }
 }
 
+void ProductLogBuffer::ensureHeader(const std::string& header) {
+    if (plogHeaders_.empty() || std::find(plogHeaders_.begin(), plogHeaders_.end(), header) == plogHeaders_.end())
+        plogHeaders_.push_back(header);
+}
+
+void ProductLogBuffer::plogAdd(const std::string& header, const std::string& value) {
+    ensureHeader(header);
+    size_t i = static_cast<size_t>(std::find(plogHeaders_.begin(), plogHeaders_.end(), header) - plogHeaders_.begin());
+    if (plogCurrentRow_.size() <= i) plogCurrentRow_.resize(i + 1, "");
+    plogCurrentRow_[i] = value;
+}
+
+void ProductLogBuffer::plogEndRow() {
+    if (!plogCurrentRow_.empty()) {
+        plogRows_.push_back(std::move(plogCurrentRow_));
+        plogCurrentRow_.clear();
+    }
+}
+
+size_t ProductLogBuffer::estimateBytes() const {
+    size_t n = 0;
+    for (const auto& h : plogHeaders_) n += h.size() + 2;
+    for (const auto& row : plogRows_)
+        for (const auto& cell : row) n += cell.size() + 2;
+    n += 200;
+    return n;
+}
+
 void ProductLogBuffer::clear() {
     plogHeaders_.clear();
     plogRows_.clear();
+    plogCurrentRow_.clear();
 }
 
 }  // namespace optimizer

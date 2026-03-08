@@ -1,6 +1,6 @@
 # 最適化器の主要パラメータ一覧
 
-以下は PSO / DE / LM の主要パラメータです。**いずれも `config/para.cfg` で指定可能**です（TraceConfig が読込、OptimizerDriver が参照）。
+以下は PSO / DE / LM の主要パラメータです。**いずれも `config/para.cfg` で指定可能**です（ParaConfig が読込、OptimizerDriver が参照）。
 
 ---
 
@@ -46,7 +46,7 @@
 | **lm_max_try** | 1 反復あたりのステップ試行回数 | `OptimizerDriver.cpp` L222: `8` | 8 |
 
 - コンストラクタ: `LM(num_dim, num_data, z)`。内部で `lambda_ = 10.0`、`r_[d] = 0.005` を固定。
-- `setLambda()` で反復中に λ を更新。bounds は `TraceConfig::isLmApplyBoundsEnabled()` と `mapper.getApplyBounds()` で適用有無を制御。
+- `setLambda()` で反復中に λ を更新。bounds は `ParaConfig::isLmApplyBoundsEnabled()` と `mapper.getApplyBounds()` で適用有無を制御。
 
 ---
 
@@ -54,9 +54,9 @@
 
 | パラメータ | 意味 | 現在の設定箇所 |
 |------------|------|----------------|
-| **n_iter_pso** | PSO 反復数 | `para.cfg` → `TraceConfig`（既定 120） |
-| **n_iter_de** | DE 反復数 | `para.cfg` → `TraceConfig`（既定 120） |
-| **n_iter_lm** | LM 反復数 | `para.cfg` → `TraceConfig`（既定 80） |
+| **n_iter_pso** | PSO 反復数 | `para.cfg` → `ParaConfig`（既定 120） |
+| **n_iter_de** | DE 反復数 | `para.cfg` → `ParaConfig`（既定 120） |
+| **n_iter_lm** | LM 反復数 | `para.cfg` → `ParaConfig`（既定 80） |
 | **N_PARTICLE** | PSO 粒子数 | `OptimizerDriver.cpp` L30: 20（固定） |
 | **N_POP_DE** | DE 個体数 | `OptimizerDriver.cpp` L31: 20（固定） |
 | **初期範囲オフセット** | PSO/DE の初期化 `z0 ± value` | L83-84, L150-151: 0.5（固定） |

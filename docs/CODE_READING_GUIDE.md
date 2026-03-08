@@ -61,7 +61,7 @@
 | 21 | **Optimizer/DE/DE.h**, **.cpp** | 差分進化。getPopulation / setEvalData / calcScore / mutation / selection。bounds は ul_bound_ / ll_bound_ でクリップ |
 | 22 | **Optimizer/LM/LM.h**, **.cpp** | Levenberg–Marquardt。setEvalData / setJacobian / getNextDelta。setLambda / getLambda で adaptive λ。gjm で (J^T J + λI) δ = -J^T r を解く |
 | 23 | **util/RunConfig.h** | 実行設定（trace, optimizer 名リスト, 反復数, lm_apply_bounds） |
-| 24 | **util/TraceConfig.h**, **.cpp** | 開発者設定の読込（trace=on/off, optimizer=..., lm_apply_bounds=on/off）。load(configPath) と loadFromStruct(RunConfig) |
+| 24 | **util/ParaConfig.hpppp**, **.cpp** | 開発者設定の読込（trace=on/off, optimizer=..., lm_apply_bounds=on/off）。load(configPath) と loadFromStruct(RunConfig) |
 | 25 | **util/IResultWriter.h** | 結果出力の窓口：writeApplyOnly / writeAfterOptimization |
 | 26 | **util/ProductLogBuffer.h**, **.cpp** | PLOG 専用バッファ。1 製品 1 行・列を横に追加。ResultOutput が flush 時にファイル書き出しに利用 |
 | 27 | **util/ResultOutput.h**, **.cpp** | 結果 CSV ヘルパ。汎用の addColumn/endRow/flush(timing)、PLOG（writePLOG → 終了時 flushPLOG）、LLOG/DLOG（writeLLOG/writeDLOG）。ファイル・合計サイズ上限で超過時は警告してスキップ |
@@ -73,7 +73,7 @@
 
 - PSO/DE は「候補解 × 製品」で evaluate を何回も呼ぶ。LM は「現在点 + ヤコビ」で 1 反復あたり 1〜数回。ドライバ側のループの違いを理解しているか
 - LM の eval_data の解釈：first=実測, second=予測 で J^T (measured - predicted) が正しい向きか
-- runLM の bounds クリップが「適用有無」フラグ（TraceConfig::isLmApplyBoundsEnabled, mapper.getApplyBounds）と整合しているか
+- runLM の bounds クリップが「適用有無」フラグ（ParaConfig::isLmApplyBoundsEnabled, mapper.getApplyBounds）と整合しているか
 - Gauss–Jordan（gjm）のピボットなし・0 割の扱い（LM の数値安定性）
 
 ---
@@ -86,7 +86,7 @@
 | 32 | **mock/demo_main.cpp** | エントリ。Handler で設定読込 → 3 モデル × 最適化器で OptimizerDriver::run を呼び、result/summary.csv を出力 |
 | 33 | **mock/Mock.h**, **Mock.cpp** | テスト用 IPhysicalModel / IProductDataLoader |
 | 34 | **mock/ResultWriterStub.h**, **.cpp** | IResultWriter のスタブ（必要なら） |
-| 35 | **tests/test_*.cpp** | ParameterMapper, ProductRunner, BatchEvaluationHandler, Objective, OptimizerConnection, ResultOutput, TraceConfig の単体テスト |
+| 35 | **tests/test_*.cpp** | ParameterMapper, ProductRunner, BatchEvaluationHandler, Objective, OptimizerConnection, ResultOutput, ParaConfig の単体テスト |
 | 36 | **Optimizer/*/test_*.cpp** | PSO, DE, LM のユニットテスト |
 
 **チェック観点（Phase 4）**
@@ -155,7 +155,7 @@
 | ファイル | 概要 |
 |----------|------|
 | **RunConfig.h** | trace_enabled, optimizer_names, n_iter_*, lm_apply_bounds |
-| **TraceConfig.h/.cpp** | load(path) で trace / optimizer / lm_apply_bounds を読む。loadFromStruct(RunConfig)。isTraceEnabled, isLmApplyBoundsEnabled, getOptimizersToRun |
+| **ParaConfig.hpp/.cpp** | load(path) で trace / optimizer / lm_apply_bounds を読む。loadFromStruct(RunConfig)。isTraceEnabled, isLmApplyBoundsEnabled, getOptimizersToRun |
 | **IResultWriter.h** | writeApplyOnly(fullParams, results), writeAfterOptimization(fullParams, results) |
 | **OptimizerDriver.h/.cpp** | run(...) で PSO/DE/LM を分岐。runPSO/runDE/runLM 内で Objective, mapper の bounds/initial を使用。runLM は adaptive lambda + ステップ採用/却下 + bounds クリップ。runApplyOnly(mapper, model, loader, products, dbProvider, resultWriter) |
 | **Handler.h/.cpp** | 設定ファイルを読んで getOptimizersToRun() |
@@ -179,7 +179,7 @@
 demo_main
   → Handler(config) → getOptimizersToRun()
   → OptimizerDriver::run(configPath, mapper, model, loader, products, optimizerName, ...)
-       → TraceConfig::load(configPath)
+       → ParaConfig::load(configPath)
        → runPSO / runDE / runLM のいずれか
             → Objective::evaluate(x) または evaluateWithJacobian(x)
                  → mapper.expandToFullParameterSet(x)
@@ -204,7 +204,7 @@ demo_main
 | 設定 | 役割 | 読むコード |
 |------|------|------------|
 | **config/params_sample.csv** | パラメータ名・enable_opt・初期値・上下限・apply_bounds | CsvParamLoader, ParameterMapper |
-| **config/para.cfg** | trace, optimizer, n_iter_pso/de/lm, lm_apply_bounds, pso_demo_mode | TraceConfig::load |
+| **config/para.cfg** | trace, optimizer, n_iter_pso/de/lm, lm_apply_bounds, pso_demo_mode | ParaConfig::load |
 
 ---
 
@@ -213,7 +213,7 @@ demo_main
 - [ ] **残差の符号**：どこでも「measured - predicted」で統一されているか
 - [ ] **パラメータ並び**：ParamSpec の並び ≒ fullParams の並び ≒ モデルの run(fullParams, ...) の期待並び
 - [ ] **LM の eval_data**：first=実測, second=予測 で getNextDelta の右辺が -J^T r になっているか
-- [ ] **bounds**：PSO/DE はコンストラクタで範囲を渡してクリップ。LM は runLM 内で TraceConfig::isLmApplyBoundsEnabled と getApplyBounds を見てクリップ
+- [ ] **bounds**：PSO/DE はコンストラクタで範囲を渡してクリップ。LM は runLM 内で ParaConfig::isLmApplyBoundsEnabled と getApplyBounds を見てクリップ
 - [ ] **初期値**：getInitialVector(nullptr) が CSV の init_value / init_mode から正しく組み立てられているか
 - [ ] **USERWORK**：IPhysicalModel, IProductDataLoader, DB 値取得、出力（IResultWriter）の差し替え箇所がコードと docs/USERWORK.md で一致しているか
 - [ ] **数値**：LM の λ の上下限、最大リトライ数、Objective の ε、gjm の 0 割対策の有無
@@ -250,8 +250,8 @@ Optimizer/DE/DE.cpp
 Optimizer/LM/LM.h
 Optimizer/LM/LM.cpp
 util/RunConfig.h
-util/TraceConfig.h
-util/TraceConfig.cpp
+util/ParaConfig.hpp
+util/ParaConfig.cpp
 util/IResultWriter.h
 util/OptimizerDriver.h
 util/OptimizerDriver.cpp

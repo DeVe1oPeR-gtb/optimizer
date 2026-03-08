@@ -17,24 +17,33 @@ namespace optimizer {
  * @brief PLOG (product log) 専用バッファ
  *
  * - setFilename(format): 出力先フォーマット（{timestamp}, {product_id} 等）
- * - write(results, column_name): 列を横に追加（複数回で列が増える）
- * - getFilename / getHeaders / getRows: 内容取得（ResultOutput が flush 時にファイル書き出しに使用）
- * - clear(): 書き出し後にクリア
+ * - plogAdd(header, value): 現在行に列を追加。plogEndRow(): 行を確定し次へ。
+ * - write(results, column_name): 列を横に追加（従来 API）
+ * - getFilename / getHeaders / getRows: 内容取得。clear(): 書き出し後にクリア
  */
 class ProductLogBuffer {
 public:
     void setFilename(const std::string& format) { plogFilename_ = format; }
+    /** 現在行に列を追加（値は文字列）。書式は呼び出し側で適用すること。 */
+    void plogAdd(const std::string& header, const std::string& value);
+    /** 現在行を確定し、次の行へ。 */
+    void plogEndRow();
     void write(const std::vector<ProductRunResult>& results, const std::string& column_name);
     const std::string& getFilename() const { return plogFilename_; }
     const std::vector<std::string>& getHeaders() const { return plogHeaders_; }
     const std::vector<std::vector<std::string>>& getRows() const { return plogRows_; }
     void clear();
     bool empty() const { return plogRows_.empty(); }
+    /** 現在の行数＋見込みでおおよそのバイト数 */
+    size_t estimateBytes() const;
 
 private:
+    void ensureHeader(const std::string& header);
+
     std::string plogFilename_;
     std::vector<std::string> plogHeaders_;
     std::vector<std::vector<std::string>> plogRows_;
+    std::vector<std::string> plogCurrentRow_;
     static std::string formatNumeric(double value);
 };
 

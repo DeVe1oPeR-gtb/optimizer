@@ -1,9 +1,9 @@
 /**
- * @file TraceConfig.cpp
+ * @file ParaConfig.cpp
  * @brief config/para.cfg の読込（trace, optimizer, 各最適化器パラメータ）。key=val 形式。
  */
 
-#include "util/TraceConfig.hpp"
+#include "util/ParaConfig.hpp"
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -13,51 +13,54 @@
 
 namespace optimizer {
 
-bool TraceConfig::traceEnabled_ = false;
-bool TraceConfig::debugEnabled_ = false;
-std::ostream* TraceConfig::traceStream_ = nullptr;
-std::ostream* TraceConfig::debugStream_ = nullptr;
-std::vector<std::string> TraceConfig::optimizersToRun_;
-bool TraceConfig::optimizerListValid_ = false;
-std::string TraceConfig::optimizerListError_ = "optimizer= が指定されていません。";
-bool TraceConfig::lmApplyBoundsEnabled_ = true;
-int TraceConfig::nIterPso_ = 120;
-int TraceConfig::nIterDe_ = 120;
-int TraceConfig::nIterLm_ = 80;
-double TraceConfig::psoW_ = 0.7;
-double TraceConfig::psoC1_ = 1.8;
-double TraceConfig::psoC2_ = 1.8;
-int TraceConfig::psoNParticle_ = 20;
-double TraceConfig::psoInitRadius_ = 0.5;
-double TraceConfig::deF_ = 0.5;
-double TraceConfig::deCr_ = 0.9;
-int TraceConfig::deNPop_ = 20;
-double TraceConfig::deInitRadius_ = 0.5;
-double TraceConfig::lmLambdaInit_ = 10.0;
-double TraceConfig::lmRPerturb_ = 0.005;
-double TraceConfig::lmLambdaMin_ = 1e-10;
-double TraceConfig::lmLambdaMax_ = 1e12;
-double TraceConfig::lmLambdaDown_ = 0.5;
-double TraceConfig::lmLambdaUp_ = 10.0;
-int TraceConfig::lmMaxTry_ = 8;
-size_t TraceConfig::traceLogMaxBytes_ = 10 * 1024 * 1024;   // 10 MiB
-size_t TraceConfig::debugLogMaxBytes_ = 1 * 1024 * 1024;   // 1 MiB
-std::string TraceConfig::plogFilename_;
-std::string TraceConfig::csvFilenameAfter_;
-bool TraceConfig::detailEnabled_ = false;
-int TraceConfig::detailStartIndex_ = 0;
-int TraceConfig::detailMaxPoints_ = 0;
-bool TraceConfig::llogOneFile_ = true;
-std::string TraceConfig::llogFilename_;
-std::string TraceConfig::dlogFilename_;
-size_t TraceConfig::resultFileMaxBytes_ = 0;
-size_t TraceConfig::resultTotalMaxBytes_ = 0;
-std::string TraceConfig::resultFinalParamsFilename_;
-std::vector<std::string> TraceConfig::optimizationDataTypes_;
-double TraceConfig::optimizationPositionMin_ = 0.0;
-double TraceConfig::optimizationPositionMax_ = 1.0;
+bool ParaConfig::traceEnabled_ = false;
+bool ParaConfig::debugEnabled_ = false;
+std::ostream* ParaConfig::traceStream_ = nullptr;
+std::ostream* ParaConfig::debugStream_ = nullptr;
+std::vector<std::string> ParaConfig::optimizersToRun_;
+bool ParaConfig::optimizerListValid_ = false;
+std::string ParaConfig::optimizerListError_ = "optimizer= が指定されていません。";
+bool ParaConfig::lmApplyBoundsEnabled_ = true;
+int ParaConfig::nIterPso_ = 120;
+int ParaConfig::nIterDe_ = 120;
+int ParaConfig::nIterLm_ = 80;
+double ParaConfig::psoW_ = 0.7;
+double ParaConfig::psoC1_ = 1.8;
+double ParaConfig::psoC2_ = 1.8;
+int ParaConfig::psoNParticle_ = 20;
+double ParaConfig::psoInitRadius_ = 0.5;
+double ParaConfig::deF_ = 0.5;
+double ParaConfig::deCr_ = 0.9;
+int ParaConfig::deNPop_ = 20;
+double ParaConfig::deInitRadius_ = 0.5;
+double ParaConfig::lmLambdaInit_ = 10.0;
+double ParaConfig::lmRPerturb_ = 0.005;
+double ParaConfig::lmLambdaMin_ = 1e-10;
+double ParaConfig::lmLambdaMax_ = 1e12;
+double ParaConfig::lmLambdaDown_ = 0.5;
+double ParaConfig::lmLambdaUp_ = 10.0;
+int ParaConfig::lmMaxTry_ = 8;
+size_t ParaConfig::traceLogMaxBytes_ = 10 * 1024 * 1024;   // 10 MiB
+size_t ParaConfig::debugLogMaxBytes_ = 1 * 1024 * 1024;   // 1 MiB
+bool ParaConfig::plogEnabled_ = true;
+bool ParaConfig::llogEnabled_ = false;
+bool ParaConfig::dlogEnabled_ = false;
+std::string ParaConfig::plogFilename_;
+std::string ParaConfig::csvFilenameAfter_;
+bool ParaConfig::detailEnabled_ = false;
+int ParaConfig::detailStartIndex_ = 0;
+int ParaConfig::detailMaxPoints_ = 0;
+bool ParaConfig::llogOneFile_ = true;
+std::string ParaConfig::llogFilename_;
+std::string ParaConfig::dlogFilename_;
+size_t ParaConfig::resultFileMaxBytes_ = 0;
+size_t ParaConfig::resultTotalMaxBytes_ = 0;
+std::string ParaConfig::resultFinalParamsFilename_;
+std::vector<std::string> ParaConfig::optimizationDataTypes_;
+double ParaConfig::optimizationPositionMin_ = 0.0;
+double ParaConfig::optimizationPositionMax_ = 1.0;
 
-void TraceConfig::loadFromStruct(const RunConfig& config) {
+void ParaConfig::loadFromStruct(const RunConfig& config) {
     traceEnabled_ = config.trace_enabled;
     /* debug は loadFromStruct では変更しない（cfg の debug= のみ） */
     if (config.optimizer_names.empty()) {
@@ -128,7 +131,7 @@ static bool isValidOptimizerName(const std::string& s) {
     return s == "PSO" || s == "DE" || s == "LM" || s == "INIT" || s == "DB";
 }
 
-void TraceConfig::load(const std::string& path) {
+void ParaConfig::load(const std::string& path) {
     std::ifstream f(path);
     if (!f) return;
     bool optimizerKeySeen = false;
@@ -239,6 +242,12 @@ void TraceConfig::load(const std::string& path) {
         } else if (key == "debug_log_max_bytes") {
             long v = parsePositiveLong(val, static_cast<long>(debugLogMaxBytes_));
             debugLogMaxBytes_ = (v > 0) ? static_cast<size_t>(v) : debugLogMaxBytes_;
+        } else if (key == "plog_enabled") {
+            plogEnabled_ = (val == "1" || val == "on" || val == "true");
+        } else if (key == "llog_enabled") {
+            llogEnabled_ = (val == "1" || val == "on" || val == "true");
+        } else if (key == "dlog_enabled") {
+            dlogEnabled_ = (val == "1" || val == "on" || val == "true");
         } else if (key == "plog_filename" || key == "result_filename_before") {
             plogFilename_ = val;
         } else if (key == "csv_filename_after" || key == "result_filename_after") {
@@ -291,69 +300,91 @@ void TraceConfig::load(const std::string& path) {
     }
 }
 
-bool TraceConfig::isTraceEnabled() { return traceEnabled_; }
-bool TraceConfig::isDebugEnabled() { return debugEnabled_; }
-std::ostream* TraceConfig::getDebugStream() { return debugStream_; }
-void TraceConfig::setDebugStream(std::ostream* s) { debugStream_ = s; }
+bool ParaConfig::isTraceEnabled() { return traceEnabled_; }
+bool ParaConfig::isDebugEnabled() { return debugEnabled_; }
+std::ostream* ParaConfig::getDebugStream() { return debugStream_; }
+void ParaConfig::setDebugStream(std::ostream* s) { debugStream_ = s; }
 
-void TraceConfig::logDebug(const std::string& message) {
+void ParaConfig::logDebug(const std::string& message) {
     if (!debugEnabled_) return;
     std::ostream* out = debugStream_ ? debugStream_ : &std::cerr;
     *out << "[debug] " << message << "\n";
     if (out != &std::cerr) out->flush();
 }
 
-size_t TraceConfig::getTraceLogMaxBytes() { return traceLogMaxBytes_; }
-size_t TraceConfig::getDebugLogMaxBytes() { return debugLogMaxBytes_; }
+size_t ParaConfig::getTraceLogMaxBytes() { return traceLogMaxBytes_; }
+size_t ParaConfig::getDebugLogMaxBytes() { return debugLogMaxBytes_; }
 
-bool TraceConfig::isLmApplyBoundsEnabled() { return lmApplyBoundsEnabled_; }
-const std::vector<std::string>& TraceConfig::getOptimizersToRun() { return optimizersToRun_; }
-bool TraceConfig::isOptimizerListValid() { return optimizerListValid_; }
-const std::string& TraceConfig::getOptimizerListError() { return optimizerListError_; }
-std::ostream* TraceConfig::getTraceStream() { return traceStream_; }
-void TraceConfig::setTraceStream(std::ostream* s) { traceStream_ = s; }
-int TraceConfig::getNIterPso() { return nIterPso_; }
-int TraceConfig::getNIterDe() { return nIterDe_; }
-int TraceConfig::getNIterLm() { return nIterLm_; }
-double TraceConfig::getPsoW() { return psoW_; }
-double TraceConfig::getPsoC1() { return psoC1_; }
-double TraceConfig::getPsoC2() { return psoC2_; }
-int TraceConfig::getPsoNParticle() { return psoNParticle_; }
-double TraceConfig::getPsoInitRadius() { return psoInitRadius_; }
-double TraceConfig::getDeF() { return deF_; }
-double TraceConfig::getDeCr() { return deCr_; }
-int TraceConfig::getDeNPop() { return deNPop_; }
-double TraceConfig::getDeInitRadius() { return deInitRadius_; }
-double TraceConfig::getLmLambdaInit() { return lmLambdaInit_; }
-double TraceConfig::getLmRPerturb() { return lmRPerturb_; }
-double TraceConfig::getLmLambdaMin() { return lmLambdaMin_; }
-double TraceConfig::getLmLambdaMax() { return lmLambdaMax_; }
-double TraceConfig::getLmLambdaDown() { return lmLambdaDown_; }
-double TraceConfig::getLmLambdaUp() { return lmLambdaUp_; }
-int TraceConfig::getLmMaxTry() { return lmMaxTry_; }
+bool ParaConfig::isLmApplyBoundsEnabled() { return lmApplyBoundsEnabled_; }
+const std::vector<std::string>& ParaConfig::getOptimizersToRun() { return optimizersToRun_; }
+bool ParaConfig::isOptimizerListValid() { return optimizerListValid_; }
+const std::string& ParaConfig::getOptimizerListError() { return optimizerListError_; }
+std::ostream* ParaConfig::getTraceStream() { return traceStream_; }
+void ParaConfig::setTraceStream(std::ostream* s) { traceStream_ = s; }
+int ParaConfig::getNIterPso() { return nIterPso_; }
+int ParaConfig::getNIterDe() { return nIterDe_; }
+int ParaConfig::getNIterLm() { return nIterLm_; }
+double ParaConfig::getPsoW() { return psoW_; }
+double ParaConfig::getPsoC1() { return psoC1_; }
+double ParaConfig::getPsoC2() { return psoC2_; }
+int ParaConfig::getPsoNParticle() { return psoNParticle_; }
+double ParaConfig::getPsoInitRadius() { return psoInitRadius_; }
+double ParaConfig::getDeF() { return deF_; }
+double ParaConfig::getDeCr() { return deCr_; }
+int ParaConfig::getDeNPop() { return deNPop_; }
+double ParaConfig::getDeInitRadius() { return deInitRadius_; }
+double ParaConfig::getLmLambdaInit() { return lmLambdaInit_; }
+double ParaConfig::getLmRPerturb() { return lmRPerturb_; }
+double ParaConfig::getLmLambdaMin() { return lmLambdaMin_; }
+double ParaConfig::getLmLambdaMax() { return lmLambdaMax_; }
+double ParaConfig::getLmLambdaDown() { return lmLambdaDown_; }
+double ParaConfig::getLmLambdaUp() { return lmLambdaUp_; }
+int ParaConfig::getLmMaxTry() { return lmMaxTry_; }
 
-const std::string& TraceConfig::getPLOGFilename() { return plogFilename_; }
-const std::string& TraceConfig::getCsvFilenameAfter() { return csvFilenameAfter_; }
-bool TraceConfig::getDetailEnabled() { return detailEnabled_; }
-int TraceConfig::getDetailStartIndex() { return detailStartIndex_; }
-int TraceConfig::getDetailMaxPoints() { return detailMaxPoints_; }
-bool TraceConfig::getLLOGOneFile() { return llogOneFile_; }
-const std::string& TraceConfig::getLLOGFilename() { return llogFilename_; }
-const std::string& TraceConfig::getDLOGFilename() { return dlogFilename_; }
-size_t TraceConfig::getResultFileMaxBytes() { return resultFileMaxBytes_; }
-size_t TraceConfig::getResultTotalMaxBytes() { return resultTotalMaxBytes_; }
-const std::string& TraceConfig::getResultFinalParamsFilename() { return resultFinalParamsFilename_; }
+bool ParaConfig::getPLOGEnabled() { return plogEnabled_; }
+bool ParaConfig::getLLOGEnabled() { return llogEnabled_; }
+bool ParaConfig::getDLOGEnabled() { return dlogEnabled_; }
+const std::string& ParaConfig::getPLOGFilename() { return plogFilename_; }
+const std::string& ParaConfig::getCsvFilenameAfter() { return csvFilenameAfter_; }
+bool ParaConfig::getDetailEnabled() { return detailEnabled_; }
+int ParaConfig::getDetailStartIndex() { return detailStartIndex_; }
+int ParaConfig::getDetailMaxPoints() { return detailMaxPoints_; }
+bool ParaConfig::getLLOGOneFile() { return llogOneFile_; }
+const std::string& ParaConfig::getLLOGFilename() { return llogFilename_; }
+const std::string& ParaConfig::getDLOGFilename() { return dlogFilename_; }
+size_t ParaConfig::getResultFileMaxBytes() { return resultFileMaxBytes_; }
+size_t ParaConfig::getResultTotalMaxBytes() { return resultTotalMaxBytes_; }
+const std::string& ParaConfig::getResultFinalParamsFilename() { return resultFinalParamsFilename_; }
 
-const std::vector<std::string>& TraceConfig::getOptimizationDataTypes() { return optimizationDataTypes_; }
+const std::vector<std::string>& ParaConfig::getOptimizationDataTypes() { return optimizationDataTypes_; }
 
-bool TraceConfig::isDataTypeUsedForOptimization(const std::string& data_type_id) {
+bool ParaConfig::isDataTypeUsedForOptimization(const std::string& data_type_id) {
     if (optimizationDataTypes_.empty()) return true;
     for (const auto& t : optimizationDataTypes_)
         if (t == data_type_id) return true;
     return false;
 }
 
-double TraceConfig::getOptimizationPositionMin() { return optimizationPositionMin_; }
-double TraceConfig::getOptimizationPositionMax() { return optimizationPositionMax_; }
+double ParaConfig::getOptimizationPositionMin() { return optimizationPositionMin_; }
+double ParaConfig::getOptimizationPositionMax() { return optimizationPositionMax_; }
+
+void ParaConfig::resetForTest() {
+    optimizersToRun_.clear();
+    optimizersToRun_.shrink_to_fit();
+    optimizerListValid_ = false;
+    optimizerListError_ = "optimizer= が指定されていません。";
+    plogFilename_.clear();
+    plogFilename_.shrink_to_fit();
+    csvFilenameAfter_.clear();
+    csvFilenameAfter_.shrink_to_fit();
+    llogFilename_.clear();
+    llogFilename_.shrink_to_fit();
+    dlogFilename_.clear();
+    dlogFilename_.shrink_to_fit();
+    resultFinalParamsFilename_.clear();
+    resultFinalParamsFilename_.shrink_to_fit();
+    optimizationDataTypes_.clear();
+    optimizationDataTypes_.shrink_to_fit();
+}
 
 }  // namespace optimizer

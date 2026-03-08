@@ -15,6 +15,13 @@
 
 namespace optimizer {
 
+ResultOutput::~ResultOutput() {
+    if (dlogFile_.is_open()) {
+        dlogFile_.flush();
+        dlogFile_.close();
+    }
+}
+
 static std::string escapeCsvCell(const std::string& s) {
     if (s.find(',') == std::string::npos && s.find('"') == std::string::npos && s.find('\n') == std::string::npos)
         return s;
@@ -240,6 +247,26 @@ void ResultOutput::setPLOGFilename(const std::string& format) {
     plog_.setFilename(format);
 }
 
+void ResultOutput::PLOG_add(const std::string& column, const std::string& value, const std::string& /*format*/) {
+    plog_.plogAdd(column, value);
+}
+
+void ResultOutput::PLOG_add(const std::string& column, double value, const std::string& format) {
+    plog_.plogAdd(column, formatNumeric(value, format));
+}
+
+void ResultOutput::PLOG_add(const std::string& column, int value, const std::string& format) {
+    plog_.plogAdd(column, formatNumeric(value, format));
+}
+
+void ResultOutput::PLOG_endRow() {
+    plog_.plogEndRow();
+    if (maxFileBytes_ > 0 && plog_.estimateBytes() >= maxFileBytes_)
+        flushPLOG();
+    else if (maxTotalBytes_ > 0 && (totalBytesWritten_ + plog_.estimateBytes()) >= maxTotalBytes_)
+        flushPLOG();
+}
+
 void ResultOutput::writePLOG(const std::vector<ProductRunResult>& results, const std::string& column_name) {
     plog_.write(results, column_name);
 }
@@ -291,6 +318,135 @@ void ResultOutput::appendSummaryRows(const std::vector<ProductRunResult>& result
     }
 }
 
+// --- LLOG ---
+static void ensureLogHeader(std::vector<std::string>& headers, std::vector<std::string>& currentRow, const std::string& header) {
+    if (headers.empty() || std::find(headers.begin(), headers.end(), header) == headers.end())
+        headers.push_back(header);
+    size_t i = static_cast<size_t>(std::find(headers.begin(), headers.end(), header) - headers.begin());
+    if (currentRow.size() <= i) currentRow.resize(i + 1, "");
+}
+
+void ResultOutput::setLLOGFilename(const std::string& format) { llogFilename_ = format; }
+
+void ResultOutput::LLOG_add(const std::string& column, const std::string& value, const std::string& /*format*/) {
+    ensureLogHeader(llogHeaders_, llogCurrentRow_, column);
+    size_t i = static_cast<size_t>(std::find(llogHeaders_.begin(), llogHeaders_.end(), column) - llogHeaders_.begin());
+    llogCurrentRow_[i] = value;
+}
+
+void ResultOutput::LLOG_add(const std::string& column, double value, const std::string& format) {
+    ensureLogHeader(llogHeaders_, llogCurrentRow_, column);
+    size_t i = static_cast<size_t>(std::find(llogHeaders_.begin(), llogHeaders_.end(), column) - llogHeaders_.begin());
+    llogCurrentRow_[i] = formatNumeric(value, format);
+}
+
+void ResultOutput::LLOG_add(const std::string& column, int value, const std::string& format) {
+    ensureLogHeader(llogHeaders_, llogCurrentRow_, column);
+    size_t i = static_cast<size_t>(std::find(llogHeaders_.begin(), llogHeaders_.end(), column) - llogHeaders_.begin());
+    llogCurrentRow_[i] = formatNumeric(value, format);
+}
+
+void ResultOutput::LLOG_endRow() {
+    if (!llogCurrentRow_.empty()) {
+        llogRows_.push_back(std::move(llogCurrentRow_));
+        llogCurrentRow_.clear();
+    }
+    size_t est = 0;
+    for (const auto& h : llogHeaders_) est += h.size() + 2;
+    for (const auto& row : llogRows_) for (const auto& c : row) est += c.size() + 2;
+    est += 200;
+    if ((maxFileBytes_ > 0 && est >= maxFileBytes_) || (maxTotalBytes_ > 0 && (totalBytesWritten_ + est) >= maxTotalBytes_))
+        flushLLOG();
+}
+
+void ResultOutput::flushLLOG() {
+    if (llogFilename_.empty() || llogRows_.empty()) return;
+    std::string path = replacePlaceholders(llogFilename_, "");
+    std::ostringstream body;
+    for (size_t i = 0; i < llogHeaders_.size(); ++i) {
+        body << escapeCsvCell(llogHeaders_[i]);
+        if (i < llogHeaders_.size() - 1) body << ",";
+    }
+    body << "\n";
+    const size_t nc = llogHeaders_.size();
+    for (const auto& row : llogRows_) {
+        for (size_t i = 0; i < nc; ++i) {
+            if (i) body << ",";
+            body << escapeCsvCell(i < row.size() ? row[i] : "");
+        }
+        body << "\n";
+    }
+    std::string content = body.str();
+    size_t len = content.size();
+    if (wouldExceedLimits(len, path)) {
+        lastFlushSkipped_ = true;
+        TerminalMessage::error("[ResultOutput] LLOG size limit exceeded. Skip: " + path);
+        return;
+    }
+    std::ofstream f(path);
+    if (!f) {
+        lastFlushSkipped_ = true;
+        TerminalMessage::error("[ResultOutput] Failed to open LLOG: " + path);
+        return;
+    }
+    f << content;
+    totalBytesWritten_ += len;
+    lastFlushSkipped_ = false;
+    llogRows_.clear();
+}
+
+// --- DLOG ---
+void ResultOutput::setDLOGFilename(const std::string& format) { dlogFilenameFormat_ = format; }
+
+void ResultOutput::DLOG_beginProduct(const std::string& product_id) {
+    dlogCurrentProductId_ = product_id;
+    dlogCurrentPath_ = replacePlaceholders(dlogFilenameFormat_, product_id);
+    if (dlogFile_.is_open()) dlogFile_.close();
+    dlogCurrentRow_.clear();
+}
+
+void ResultOutput::DLOG_add(const std::string& column, const std::string& value, const std::string& /*format*/) {
+    ensureLogHeader(dlogHeaders_, dlogCurrentRow_, column);
+    size_t i = static_cast<size_t>(std::find(dlogHeaders_.begin(), dlogHeaders_.end(), column) - dlogHeaders_.begin());
+    dlogCurrentRow_[i] = value;
+}
+
+void ResultOutput::DLOG_add(const std::string& column, double value, const std::string& format) {
+    ensureLogHeader(dlogHeaders_, dlogCurrentRow_, column);
+    size_t i = static_cast<size_t>(std::find(dlogHeaders_.begin(), dlogHeaders_.end(), column) - dlogHeaders_.begin());
+    dlogCurrentRow_[i] = formatNumeric(value, format);
+}
+
+void ResultOutput::DLOG_add(const std::string& column, int value, const std::string& format) {
+    ensureLogHeader(dlogHeaders_, dlogCurrentRow_, column);
+    size_t i = static_cast<size_t>(std::find(dlogHeaders_.begin(), dlogHeaders_.end(), column) - dlogHeaders_.begin());
+    dlogCurrentRow_[i] = formatNumeric(value, format);
+}
+
+void ResultOutput::DLOG_endRow() {
+    if (dlogCurrentPath_.empty()) return;
+    if (!dlogFile_.is_open()) {
+        dlogFile_.open(dlogCurrentPath_);
+        if (!dlogFile_) {
+            TerminalMessage::error("[ResultOutput] Failed to open DLOG: " + dlogCurrentPath_);
+            return;
+        }
+        for (size_t i = 0; i < dlogHeaders_.size(); ++i) {
+            dlogFile_ << escapeCsvCell(dlogHeaders_[i]);
+            if (i < dlogHeaders_.size() - 1) dlogFile_ << ",";
+        }
+        dlogFile_ << "\n";
+    }
+    const size_t nc = dlogHeaders_.size();
+    for (size_t i = 0; i < nc; ++i)
+        dlogFile_ << escapeCsvCell(i < dlogCurrentRow_.size() ? dlogCurrentRow_[i] : "");
+    for (size_t i = dlogCurrentRow_.size(); i < nc; ++i) dlogFile_ << ",";
+    dlogFile_ << "\n";
+    dlogFile_.flush();
+    totalBytesWritten_ += 100;  // 見込み
+    dlogCurrentRow_.clear();
+}
+
 void ResultOutput::writeLLOG(const std::vector<ProductRunResult>& results,
                              size_t startIndex,
                              size_t maxPoints,
@@ -302,14 +458,22 @@ void ResultOutput::writeDLOG(const std::vector<ProductRunResult>& results,
                              size_t startIndex,
                              size_t maxPoints,
                              const std::string& filenameFormat) {
-    writeDetailCsv(results, startIndex, maxPoints, false, filenameFormat);
+    writeDetailCsv(results, startIndex, maxPoints, false, filenameFormat, nullptr);
+}
+
+void ResultOutput::writeDLOG(const std::vector<ProductRunResult>& results,
+                             const std::string& filenameFormat,
+                             const std::vector<std::pair<size_t, size_t>>& perProductRanges) {
+    if (perProductRanges.size() != results.size()) return;
+    writeDetailCsv(results, 0, 0, false, filenameFormat, &perProductRanges);
 }
 
 void ResultOutput::writeDetailCsv(const std::vector<ProductRunResult>& results,
                                   size_t startIndex,
                                   size_t maxPoints,
                                   bool oneFile,
-                                  const std::string& filenameFormat) {
+                                  const std::string& filenameFormat,
+                                  const std::vector<std::pair<size_t, size_t>>* perProductRanges) {
     if (filenameFormat.empty()) return;
     std::vector<std::string> detailHeaders = {"product_id", "point_index", "measured", "predicted", "residual"};
     std::vector<std::string> extraNames;
@@ -326,12 +490,18 @@ void ResultOutput::writeDetailCsv(const std::vector<ProductRunResult>& results,
         for (size_t ri = resultStart; ri < resultStart + resultCount && ri < results.size(); ++ri) {
             const auto& r = results[ri];
             size_t n = r.measured.size();
-            for (size_t k = 0; k < maxPoints; ++k) {
+            size_t segStart = startIndex;
+            size_t segPoints = maxPoints;
+            if (perProductRanges && !oneFile && resultCount == 1 && ri < perProductRanges->size()) {
+                segStart = (*perProductRanges)[ri].first;
+                segPoints = (*perProductRanges)[ri].second;
+            }
+            for (size_t k = 0; k < segPoints; ++k) {
                 std::vector<std::string> row;
                 row.push_back(r.product_id);
                 row.push_back(std::to_string(static_cast<int>(k)));
-                if (k < n && startIndex + k < n) {
-                    size_t idx = startIndex + k;
+                if (k < n && segStart + k < n) {
+                    size_t idx = segStart + k;
                     row.push_back(formatNumeric(r.measured[idx], ""));
                     row.push_back(formatNumeric(r.predicted[idx], ""));
                     row.push_back(formatNumeric(r.residuals[idx], ""));

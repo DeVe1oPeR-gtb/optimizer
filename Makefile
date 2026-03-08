@@ -23,7 +23,7 @@ LIB_SRCS = Optimizer/Optimizer.cpp \
 TEST_SRCS = AllTests.cpp Optimizer/PSO/test_PSO.cpp Optimizer/LM/test_LM.cpp Optimizer/DE/test_DE.cpp \
 	tests/test_ParameterMapper.cpp tests/test_ProductRunner.cpp \
 	tests/test_BatchEvaluationHandler.cpp tests/test_Objective.cpp \
-	tests/test_OptimizerConnection.cpp tests/test_ResultOutput.cpp tests/test_TraceConfig.cpp
+	tests/test_OptimizerConnection.cpp tests/test_ResultOutput.cpp tests/test_ParaConfig.cpp
 
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -69,8 +69,8 @@ $(BUILD)/tests_test_Objective.o: tests/test_Objective.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 $(BUILD)/tests_test_OptimizerConnection.o: tests/test_OptimizerConnection.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-# util (TraceConfig, IterationLog)
-$(BUILD)/util_TraceConfig.o: util/TraceConfig.cpp | $(BUILD)
+# util (ParaConfig, IterationLog)
+$(BUILD)/util_ParaConfig.o: util/ParaConfig.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 $(BUILD)/util_IterationLog.o: util/IterationLog.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -108,13 +108,13 @@ LIB_OBJ_LIST = $(BUILD)/Optimizer_Optimizer.o $(BUILD)/PSO_PSO.o $(BUILD)/LM_LM.
 TEST_OBJ_LIST = $(BUILD)/AllTests.o $(BUILD)/PSO_test_PSO.o $(BUILD)/LM_test_LM.o $(BUILD)/DE_test_DE.o \
 	$(BUILD)/tests_test_ParameterMapper.o $(BUILD)/tests_test_ProductRunner.o \
 	$(BUILD)/tests_test_BatchEvaluationHandler.o $(BUILD)/tests_test_Objective.o \
-	$(BUILD)/tests_test_OptimizerConnection.o $(BUILD)/tests_test_ResultOutput.o $(BUILD)/tests_test_TraceConfig.o
-# util のうちテストで参照するオブジェクト（TraceConfig, ResultOutput, ProductLogBuffer, TerminalMessage）
-TEST_UTIL_OBJ = $(BUILD)/util_TraceConfig.o $(BUILD)/util_ProductLogBuffer.o $(BUILD)/util_ResultOutput.o $(BUILD)/util_TerminalMessage.o
+	$(BUILD)/tests_test_OptimizerConnection.o $(BUILD)/tests_test_ResultOutput.o $(BUILD)/tests_test_ParaConfig.o
+# util のうちテストで参照するオブジェクト（ParaConfig, ResultOutput, ProductLogBuffer, TerminalMessage）
+TEST_UTIL_OBJ = $(BUILD)/util_ParaConfig.o $(BUILD)/util_ProductLogBuffer.o $(BUILD)/util_ResultOutput.o $(BUILD)/util_TerminalMessage.o
 
 $(BUILD)/tests_test_ResultOutput.o: tests/test_ResultOutput.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
-$(BUILD)/tests_test_TraceConfig.o: tests/test_TraceConfig.cpp | $(BUILD)
+$(BUILD)/tests_test_ParaConfig.o: tests/test_ParaConfig.cpp | $(BUILD)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(BUILD)/AllTests: $(LIB_OBJ_LIST) $(TEST_OBJ_LIST) $(TEST_UTIL_OBJ)
@@ -124,7 +124,7 @@ $(BUILD)/AllTests: $(LIB_OBJ_LIST) $(TEST_OBJ_LIST) $(TEST_UTIL_OBJ)
 DEMO_OBJ_LIST = $(BUILD)/Optimizer_Optimizer.o $(BUILD)/PSO_PSO.o $(BUILD)/LM_LM.o $(BUILD)/DE_DE.o \
 	$(BUILD)/param_ParamSpec.o $(BUILD)/param_CsvParamLoader.o $(BUILD)/param_ParameterMapper.o \
 	$(BUILD)/product_ProductRunner.o $(BUILD)/product_BatchEvaluationHandler.o \
-	$(BUILD)/objective_Objective.o $(BUILD)/util_TraceConfig.o $(BUILD)/util_IterationLog.o \
+	$(BUILD)/objective_Objective.o $(BUILD)/util_ParaConfig.o $(BUILD)/util_IterationLog.o \
 	$(BUILD)/util_Handler.o $(BUILD)/util_OptimizerDriver.o \
 	$(BUILD)/util_TerminalMessage.o $(BUILD)/util_DataConfig.o $(BUILD)/util_CoilList.o $(BUILD)/util_CoilDataPath.o \
 	$(BUILD)/util_LogRotate.o $(BUILD)/util_ProductLogBuffer.o $(BUILD)/util_ResultOutput.o $(BUILD)/mock_Demo.o $(BUILD)/mock_demo_main.o
@@ -150,7 +150,7 @@ $(BUILD)/onsite_main_onsite.o: onsite/main_onsite.cpp | $(BUILD)
 ONSITE_OBJ_LIST = $(BUILD)/Optimizer_Optimizer.o $(BUILD)/PSO_PSO.o $(BUILD)/LM_LM.o $(BUILD)/DE_DE.o \
 	$(BUILD)/param_ParamSpec.o $(BUILD)/param_CsvParamLoader.o $(BUILD)/param_ParameterMapper.o \
 	$(BUILD)/product_ProductRunner.o $(BUILD)/product_BatchEvaluationHandler.o \
-	$(BUILD)/objective_Objective.o $(BUILD)/util_TraceConfig.o $(BUILD)/util_IterationLog.o \
+	$(BUILD)/objective_Objective.o $(BUILD)/util_ParaConfig.o $(BUILD)/util_IterationLog.o \
 	$(BUILD)/util_Handler.o $(BUILD)/util_OptimizerDriver.o $(BUILD)/util_LogRotate.o \
 	$(BUILD)/util_TerminalMessage.o $(BUILD)/util_DataConfig.o $(BUILD)/util_CoilList.o $(BUILD)/util_CoilDataPath.o \
 	$(BUILD)/util_ProductLogBuffer.o $(BUILD)/util_ResultOutput.o $(BUILD)/onsite_main_onsite.o

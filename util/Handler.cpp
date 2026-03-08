@@ -4,14 +4,14 @@
  */
 
 #include "util/util_common.hpp"
-#include "util/TraceConfig.hpp"
+#include "util/ParaConfig.hpp"
 
 Handler::Handler(const std::string& configPath) {
-    optimizer::TraceConfig::load(configPath);
+    optimizer::ParaConfig::load(configPath);
 }
 
 Handler::~Handler() {}
 
 std::vector<std::string> Handler::getOptimizersToRun() const {
-    return optimizer::TraceConfig::getOptimizersToRun();
+    return optimizer::ParaConfig::getOptimizersToRun();
 }

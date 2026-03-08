@@ -10,7 +10,9 @@
 #include "product/ProductRunResult.hpp"
 #include "util/ProductLogBuffer.hpp"
 #include <cstddef>
+#include <fstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace optimizer {
@@ -35,6 +37,7 @@ public:
     static constexpr ResultTiming After = ResultTiming::AfterOptimization;
 
     ResultOutput() = default;
+    ~ResultOutput();
 
     /** 列を追加（文字列）。書式は使わない。 */
     void addColumn(const std::string& header, const std::string& value);
@@ -62,37 +65,48 @@ public:
     /** 前回 flush でスキップしたか */
     bool lastFlushSkipped() const { return lastFlushSkipped_; }
 
-    /**
-     * @brief PLOG (product log): 1 製品 1 行で列を横に追加。複数回呼ぶと column_name の列が追加される。flush はしない。
-     * @param column_name 追加する列のヘッダ（例: "rmse_apply", "rmse_after"）
-     */
-    void writePLOG(const std::vector<ProductRunResult>& results, const std::string& column_name);
-    /** PLOG の出力先。writePLOG 前に 1 回設定。 */
+    // --- PLOG (product log): 1 製品 1 行。add で列追加、endRow で行確定。終了時またはサイズ超過時に flush ---
     void setPLOGFilename(const std::string& format);
-    /** プログラム終了時に PLOG をファイルに書き出す。 */
+    void PLOG_add(const std::string& column, const std::string& value, const std::string& format = "");
+    void PLOG_add(const std::string& column, double value, const std::string& format = "");
+    void PLOG_add(const std::string& column, int value, const std::string& format = "");
+    void PLOG_endRow();
     void flushPLOG();
+    void writePLOG(const std::vector<ProductRunResult>& results, const std::string& column_name);  // 従来 API
 
-    /**
-     * @brief LLOG (length log): 1 製品 1 ブロック縦連結・全製品 1 ファイル。
-     */
+    // --- LLOG (length log): 製品データを縦に連結・1 ファイル。終了時またはサイズ超過時に flush ---
+    void setLLOGFilename(const std::string& format);
+    void LLOG_add(const std::string& column, const std::string& value, const std::string& format = "");
+    void LLOG_add(const std::string& column, double value, const std::string& format = "");
+    void LLOG_add(const std::string& column, int value, const std::string& format = "");
+    void LLOG_endRow();
+    void flushLLOG();
+
+    // --- DLOG (detail log): 1 製品 1 ファイル。書き込み毎に flush ---
+    void setDLOGFilename(const std::string& format);
+    void DLOG_beginProduct(const std::string& product_id);
+    void DLOG_add(const std::string& column, const std::string& value, const std::string& format = "");
+    void DLOG_add(const std::string& column, double value, const std::string& format = "");
+    void DLOG_add(const std::string& column, int value, const std::string& format = "");
+    void DLOG_endRow();
+
     void writeLLOG(const std::vector<ProductRunResult>& results,
                    size_t startIndex,
                    size_t maxPoints,
                    const std::string& filenameFormat);
-
-    /**
-     * @brief DLOG (detail log): 1 データ 1 行・1 製品 1 ファイル。
-     */
     void writeDLOG(const std::vector<ProductRunResult>& results,
                    size_t startIndex,
                    size_t maxPoints,
                    const std::string& filenameFormat);
-
+    void writeDLOG(const std::vector<ProductRunResult>& results,
+                   const std::string& filenameFormat,
+                   const std::vector<std::pair<size_t, size_t>>& perProductRanges);
     void writeDetailCsv(const std::vector<ProductRunResult>& results,
                         size_t startIndex,
                         size_t maxPoints,
                         bool oneFile,
-                        const std::string& filenameFormat);
+                        const std::string& filenameFormat,
+                        const std::vector<std::pair<size_t, size_t>>* perProductRanges = nullptr);
 
 private:
     std::vector<std::string> headers_;
@@ -101,6 +115,16 @@ private:
     std::string filenameBefore_;
     std::string filenameAfter_;
     ProductLogBuffer plog_;
+    std::string llogFilename_;
+    std::vector<std::string> llogHeaders_;
+    std::vector<std::vector<std::string>> llogRows_;
+    std::vector<std::string> llogCurrentRow_;
+    std::string dlogFilenameFormat_;
+    std::string dlogCurrentProductId_;
+    std::string dlogCurrentPath_;
+    std::vector<std::string> dlogHeaders_;
+    std::vector<std::string> dlogCurrentRow_;
+    std::ofstream dlogFile_;
     std::string detailFilenameFormat_;
     size_t maxFileBytes_ = 0;
     size_t maxTotalBytes_ = 0;

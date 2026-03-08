@@ -75,9 +75,9 @@ TEST_GROUP(PSO_SOT) {
 };
 
 TEST_GROUP(PSO_AOT) {
-    PSO<double> *pso;
-    void setup() {}
-    void teardown() { delete pso; }
+    PSO<double> *pso = nullptr;
+    void setup() { pso = nullptr; }
+    void teardown() { delete pso; pso = nullptr; }
 };
 
 TEST(PSO_SOT, Create) {

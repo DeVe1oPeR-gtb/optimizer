@@ -14,7 +14,7 @@
 #include "objective/Objective.hpp"
 #include "core/core.hpp"
 #include "param/param.hpp"
-#include "util/TraceConfig.hpp"
+#include "util/ParaConfig.hpp"
 #include "util/IterationLog.hpp"
 #include "util/LogRotate.hpp"
 #include "Optimizer/PSO/PSO.hpp"
@@ -35,53 +35,53 @@ static void checkRequiredInputs(const std::string& configPath,
                                 ParameterMapper& mapper,
                                 const std::vector<ProductMeta>& products,
                                 const std::string& optimizerName) {
-    if (!TraceConfig::isDebugEnabled()) return;
+    if (!ParaConfig::isDebugEnabled()) return;
 
-    TraceConfig::logDebug("--- required inputs check ---");
+    ParaConfig::logDebug("--- required inputs check ---");
 
     if (!configPath.empty()) {
         std::ifstream f(configPath);
         if (f)
-            TraceConfig::logDebug("config file: OK (" + configPath + ")");
+            ParaConfig::logDebug("config file: OK (" + configPath + ")");
         else
-            TraceConfig::logDebug("config file: NG (not found: " + configPath + ")");
+            ParaConfig::logDebug("config file: NG (not found: " + configPath + ")");
     } else {
-        TraceConfig::logDebug("config file: (using RunConfig, no file)");
+        ParaConfig::logDebug("config file: (using RunConfig, no file)");
     }
 
     const size_t nSpecs = mapper.specs().size();
     if (nSpecs > 0)
-        TraceConfig::logDebug("ParameterMapper specs: " + std::to_string(nSpecs) + " params");
+        ParaConfig::logDebug("ParameterMapper specs: " + std::to_string(nSpecs) + " params");
     else
-        TraceConfig::logDebug("ParameterMapper specs: NG (empty)");
+        ParaConfig::logDebug("ParameterMapper specs: NG (empty)");
 
     std::string err;
     if (mapper.validate(err))
-        TraceConfig::logDebug("ParameterMapper validate: OK");
+        ParaConfig::logDebug("ParameterMapper validate: OK");
     else
-        TraceConfig::logDebug("ParameterMapper validate: NG (" + err + ")");
+        ParaConfig::logDebug("ParameterMapper validate: NG (" + err + ")");
 
     const size_t nOpt = mapper.numOptParams();
     const size_t nFull = mapper.numFullParams();
-    TraceConfig::logDebug("ParameterMapper numOptParams=" + std::to_string(nOpt) + " numFullParams=" + std::to_string(nFull));
+    ParaConfig::logDebug("ParameterMapper numOptParams=" + std::to_string(nOpt) + " numFullParams=" + std::to_string(nFull));
 
     std::vector<double> z0 = mapper.getInitialVector(nullptr);
     if (z0.size() == nFull)
-        TraceConfig::logDebug("initial vector: OK (size=" + std::to_string(z0.size()) + ")");
+        ParaConfig::logDebug("initial vector: OK (size=" + std::to_string(z0.size()) + ")");
     else
-        TraceConfig::logDebug("initial vector: NG (size=" + std::to_string(z0.size()) + " expected " + std::to_string(nFull) + ")");
+        ParaConfig::logDebug("initial vector: NG (size=" + std::to_string(z0.size()) + " expected " + std::to_string(nFull) + ")");
 
     if (!products.empty())
-        TraceConfig::logDebug("products: OK (count=" + std::to_string(products.size()) + ")");
+        ParaConfig::logDebug("products: OK (count=" + std::to_string(products.size()) + ")");
     else
-        TraceConfig::logDebug("products: NG (empty)");
+        ParaConfig::logDebug("products: NG (empty)");
 
     if (optimizerName == "PSO" || optimizerName == "DE" || optimizerName == "LM" || optimizerName == "INIT" || optimizerName == "DB")
-        TraceConfig::logDebug("optimizer name: OK (" + optimizerName + ")");
+        ParaConfig::logDebug("optimizer name: OK (" + optimizerName + ")");
     else
-        TraceConfig::logDebug("optimizer name: NG (unknown: " + optimizerName + ")");
+        ParaConfig::logDebug("optimizer name: NG (unknown: " + optimizerName + ")");
 
-    TraceConfig::logDebug("--- end check ---");
+    ParaConfig::logDebug("--- end check ---");
 }
 
 static std::vector<ProductRunResult> computeProductResults(
@@ -150,13 +150,13 @@ static RunResult runPSO(Objective& objective,
                         const char* logLabel,
                         int nIter) {
     const size_t N_DIM = mapper.numOptParams();
-    const int nParticle = TraceConfig::getPsoNParticle();
-    const double initRad = TraceConfig::getPsoInitRadius();
+    const int nParticle = ParaConfig::getPsoNParticle();
+    const double initRad = ParaConfig::getPsoInitRadius();
     std::vector<double> lo = mapper.getLowerBounds(), up = mapper.getUpperBounds();
     std::vector<double> z0 = mapper.getInitialVector(nullptr);
-    std::vector<double> w(N_DIM, TraceConfig::getPsoW());
-    std::vector<double> c1(N_DIM, TraceConfig::getPsoC1());
-    std::vector<double> c2(N_DIM, TraceConfig::getPsoC2());
+    std::vector<double> w(N_DIM, ParaConfig::getPsoW());
+    std::vector<double> c1(N_DIM, ParaConfig::getPsoC1());
+    std::vector<double> c2(N_DIM, ParaConfig::getPsoC2());
     PSO<double> pso(nParticle, static_cast<int>(N_DIM), w, c1, c2, up, lo);
     std::vector<double> initLo(N_DIM), initUp(N_DIM);
     for (size_t i = 0; i < N_DIM; ++i) {
@@ -167,8 +167,8 @@ static RunResult runPSO(Objective& objective,
 
     std::ofstream traceFile;
     std::ofstream particleTraceFile;
-    if (TraceConfig::isTraceEnabled() && !tracePath.empty()) {
-        const size_t maxBytes = TraceConfig::getTraceLogMaxBytes();
+    if (ParaConfig::isTraceEnabled() && !tracePath.empty()) {
+        const size_t maxBytes = ParaConfig::getTraceLogMaxBytes();
         if (openLogWithRotation(tracePath, traceFile, maxBytes)) {
             traceFile << "iteration,score,p0,p1,p2\n";
             pso.setTraceStream(&traceFile);
@@ -221,11 +221,11 @@ static RunResult runDE(Objective& objective,
                        const char* logLabel,
                        int nIter) {
     const size_t N_DIM = mapper.numOptParams();
-    const int nPop = TraceConfig::getDeNPop();
-    const double initRad = TraceConfig::getDeInitRadius();
+    const int nPop = ParaConfig::getDeNPop();
+    const double initRad = ParaConfig::getDeInitRadius();
     std::vector<double> lo = mapper.getLowerBounds(), up = mapper.getUpperBounds();
     std::vector<double> z0 = mapper.getInitialVector(nullptr);
-    DE<double> de(nPop, static_cast<int>(N_DIM), TraceConfig::getDeF(), TraceConfig::getDeCr(), up, lo);
+    DE<double> de(nPop, static_cast<int>(N_DIM), ParaConfig::getDeF(), ParaConfig::getDeCr(), up, lo);
     std::vector<double> initLo(N_DIM), initUp(N_DIM);
     for (size_t i = 0; i < N_DIM; ++i) {
         initLo[i] = z0[i] - initRad;
@@ -234,8 +234,8 @@ static RunResult runDE(Objective& objective,
     de.initPopulation(initUp, initLo);
 
     std::ofstream traceFile;
-    if (TraceConfig::isTraceEnabled() && !tracePath.empty()) {
-        if (openLogWithRotation(tracePath, traceFile, TraceConfig::getTraceLogMaxBytes())) {
+    if (ParaConfig::isTraceEnabled() && !tracePath.empty()) {
+        if (openLogWithRotation(tracePath, traceFile, ParaConfig::getTraceLogMaxBytes())) {
             traceFile << "iteration,score,p0,p1,p2\n";
             de.setTraceStream(&traceFile);
             de.setTraceEnabled(true);
@@ -286,22 +286,22 @@ static RunResult runLM(Objective& objective,
     const size_t nData = data->measured.size();
     std::vector<double> measured = data->measured;
 
-    LM<double> lm(static_cast<int>(N_DIM), static_cast<int>(nData), z, TraceConfig::getLmRPerturb());
-    lm.setLambda(TraceConfig::getLmLambdaInit());
+    LM<double> lm(static_cast<int>(N_DIM), static_cast<int>(nData), z, ParaConfig::getLmRPerturb());
+    lm.setLambda(ParaConfig::getLmLambdaInit());
     std::ofstream traceFile;
-    if (TraceConfig::isTraceEnabled() && !tracePath.empty()) {
-        if (openLogWithRotation(tracePath, traceFile, TraceConfig::getTraceLogMaxBytes())) {
+    if (ParaConfig::isTraceEnabled() && !tracePath.empty()) {
+        if (openLogWithRotation(tracePath, traceFile, ParaConfig::getTraceLogMaxBytes())) {
             traceFile << "iteration,rmse,p0,p1,p2\n";
             lm.setTraceStream(&traceFile);
             lm.setTraceEnabled(true);
         }
     }
 
-    const double lambdaMin = TraceConfig::getLmLambdaMin();
-    const double lambdaMax = TraceConfig::getLmLambdaMax();
-    const double lambdaDown = TraceConfig::getLmLambdaDown();
-    const double lambdaUp = TraceConfig::getLmLambdaUp();
-    const int lmMaxTry = TraceConfig::getLmMaxTry();
+    const double lambdaMin = ParaConfig::getLmLambdaMin();
+    const double lambdaMax = ParaConfig::getLmLambdaMax();
+    const double lambdaDown = ParaConfig::getLmLambdaDown();
+    const double lambdaUp = ParaConfig::getLmLambdaUp();
+    const int lmMaxTry = ParaConfig::getLmMaxTry();
 
     std::vector<double> lo = mapper.getLowerBounds(), up = mapper.getUpperBounds();
     std::vector<bool> applyBounds = mapper.getApplyBounds();
@@ -325,7 +325,7 @@ static RunResult runLM(Objective& objective,
             std::vector<double> z_new = z;
             for (size_t i = 0; i < N_DIM; ++i) {
                 z_new[i] += delta[i];
-                if (TraceConfig::isLmApplyBoundsEnabled() && i < applyBounds.size() && applyBounds[i]
+                if (ParaConfig::isLmApplyBoundsEnabled() && i < applyBounds.size() && applyBounds[i]
                     && i < lo.size() && i < up.size()) {
                     if (z_new[i] < lo[i]) z_new[i] = lo[i];
                     if (z_new[i] > up[i]) z_new[i] = up[i];
@@ -418,16 +418,16 @@ RunResult OptimizerDriver::run(const std::string& configPath,
                                 const char* logLabel,
                                 IResultWriter* resultWriter,
                                 DbValueProvider dbValueProvider) {
-    TraceConfig::load(configPath);
-    if (TraceConfig::isDebugEnabled())
+    ParaConfig::load(configPath);
+    if (ParaConfig::isDebugEnabled())
         checkRequiredInputs(configPath, mapper, products, optimizerName);
     RunResult result = runImpl(mapper, model, loader, products, optimizerName, tracePath, logLabel,
-                               TraceConfig::getNIterPso(), TraceConfig::getNIterDe(), TraceConfig::getNIterLm(),
+                               ParaConfig::getNIterPso(), ParaConfig::getNIterDe(), ParaConfig::getNIterLm(),
                                resultWriter, dbValueProvider);
     if (!result.bestParams.empty()) {
         std::vector<double> fullParams = mapper.expandToFullParameterSet(result.bestParams);
         writeFinalParamsToStream(mapper, fullParams, std::cout);
-        const std::string& outPath = TraceConfig::getResultFinalParamsFilename();
+        const std::string& outPath = ParaConfig::getResultFinalParamsFilename();
         if (!outPath.empty()) {
             std::ofstream f(outPath);
             if (f)
@@ -447,8 +447,8 @@ RunResult OptimizerDriver::run(const RunConfig& config,
                                 const char* logLabel,
                                 IResultWriter* resultWriter,
                                 DbValueProvider dbValueProvider) {
-    TraceConfig::loadFromStruct(config);
-    if (TraceConfig::isDebugEnabled())
+    ParaConfig::loadFromStruct(config);
+    if (ParaConfig::isDebugEnabled())
         checkRequiredInputs("", mapper, products, optimizerName);
     RunResult result = runImpl(mapper, model, loader, products, optimizerName, tracePath, logLabel,
                                config.n_iter_pso, config.n_iter_de, config.n_iter_lm,
@@ -456,7 +456,7 @@ RunResult OptimizerDriver::run(const RunConfig& config,
     if (!result.bestParams.empty()) {
         std::vector<double> fullParams = mapper.expandToFullParameterSet(result.bestParams);
         writeFinalParamsToStream(mapper, fullParams, std::cout);
-        const std::string& outPath = TraceConfig::getResultFinalParamsFilename();
+        const std::string& outPath = ParaConfig::getResultFinalParamsFilename();
         if (!outPath.empty()) {
             std::ofstream f(outPath);
             if (f)
