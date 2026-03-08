@@ -63,9 +63,11 @@
 | 23 | **util/RunConfig.h** | 実行設定（trace, optimizer 名リスト, 反復数, lm_apply_bounds） |
 | 24 | **util/TraceConfig.h**, **.cpp** | 開発者設定の読込（trace=on/off, optimizer=..., lm_apply_bounds=on/off）。load(configPath) と loadFromStruct(RunConfig) |
 | 25 | **util/IResultWriter.h** | 結果出力の窓口：writeApplyOnly / writeAfterOptimization |
-| 26 | **util/OptimizerDriver.h**, **.cpp** | **メイン窓口**。run(configPath または RunConfig, mapper, model, loader, products, optimizerName, ...) で 1 回実行。内部で runPSO / runDE / runLM を分岐。runLM では adaptive lambda・ステップ採用/却下・bounds クリップ。runApplyOnly は最適化なしで適用値のみ計算して IResultWriter に渡す |
-| 27 | **util/Handler.h**, **.cpp** | 設定ファイルを読んで getOptimizersToRun() を返す（デモ用） |
-| 28 | **util/IterationLog.h**, **.cpp** | 反復ログ出力のヘルパ |
+| 26 | **util/ProductLogBuffer.h**, **.cpp** | PLOG 専用バッファ。1 製品 1 行・列を横に追加。ResultOutput が flush 時にファイル書き出しに利用 |
+| 27 | **util/ResultOutput.h**, **.cpp** | 結果 CSV ヘルパ。汎用の addColumn/endRow/flush(timing)、PLOG（writePLOG → 終了時 flushPLOG）、LLOG/DLOG（writeLLOG/writeDLOG）。ファイル・合計サイズ上限で超過時は警告してスキップ |
+| 28 | **util/OptimizerDriver.h**, **.cpp** | **メイン窓口**。run(configPath または RunConfig, mapper, model, loader, products, optimizerName, ...) で 1 回実行。内部で runPSO / runDE / runLM を分岐。runLM では adaptive lambda・ステップ採用/却下・bounds クリップ。runApplyOnly は最適化なしで適用値のみ計算して IResultWriter に渡す |
+| 29 | **util/Handler.h**, **.cpp** | 設定ファイルを読んで getOptimizersToRun() を返す（デモ用） |
+| 30 | **util/IterationLog.h**, **.cpp** | 反復ログ出力のヘルパ |
 
 **チェック観点（Phase 3）**
 
@@ -80,12 +82,12 @@
 
 | 順 | パス | 役割 |
 |---|------|------|
-| 29 | **mock/Demo.h**, **Demo.cpp** | デモ用 3 モデル（quadratic, linear, rational_exp）と 3 ローダ（measured を式で生成）。makeSpecs は demo_main 側にあり、初期値 (1, -0.5, 0.1) 等 |
-| 30 | **mock/demo_main.cpp** | エントリ。Handler で設定読込 → 3 モデル × 最適化器で OptimizerDriver::run を呼び、result/summary.csv を出力 |
-| 31 | **mock/Mock.h**, **Mock.cpp** | テスト用 IPhysicalModel / IProductDataLoader |
-| 32 | **mock/ResultWriterStub.h**, **.cpp** | IResultWriter のスタブ（必要なら） |
-| 33 | **tests/test_*.cpp** | ParameterMapper, ProductRunner, BatchEvaluationHandler, Objective, OptimizerConnection の単体テスト |
-| 34 | **Optimizer/*/test_*.cpp** | PSO, DE, LM のユニットテスト |
+| 31 | **mock/Demo.h**, **Demo.cpp** | デモ用 3 モデル（quadratic, linear, rational_exp）と 3 ローダ（measured を式で生成）。makeSpecs は demo_main 側にあり、初期値 (1, -0.5, 0.1) 等 |
+| 32 | **mock/demo_main.cpp** | エントリ。Handler で設定読込 → 3 モデル × 最適化器で OptimizerDriver::run を呼び、result/summary.csv を出力 |
+| 33 | **mock/Mock.h**, **Mock.cpp** | テスト用 IPhysicalModel / IProductDataLoader |
+| 34 | **mock/ResultWriterStub.h**, **.cpp** | IResultWriter のスタブ（必要なら） |
+| 35 | **tests/test_*.cpp** | ParameterMapper, ProductRunner, BatchEvaluationHandler, Objective, OptimizerConnection, ResultOutput, TraceConfig の単体テスト |
+| 36 | **Optimizer/*/test_*.cpp** | PSO, DE, LM のユニットテスト |
 
 **チェック観点（Phase 4）**
 

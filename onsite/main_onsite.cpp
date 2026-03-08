@@ -15,6 +15,8 @@
 #include "util/LogRotate.hpp"
 #include "util/OptimizerDriver.hpp"
 #include "util/IResultWriter.hpp"
+#include "util/ResultCsvWriter.hpp"
+#include "util/ResultOutput.hpp"
 #include "model/IPhysicalModel.hpp"
 #include "model/IProductDataLoader.hpp"
 #include "product/ProductMeta.hpp"
@@ -34,6 +36,14 @@ static void ensureLogDir() {
     _mkdir("log");
 #else
     mkdir("log", 0755);
+#endif
+}
+
+static void ensureResultDir() {
+#ifdef _WIN32
+    _mkdir("result");
+#else
+    mkdir("result", 0755);
 #endif
 }
 
@@ -69,7 +79,7 @@ static std::vector<optimizer::ProductMeta> makeProducts() {
 // 3. OnsiteModel — IPhysicalModel の実装（1 製品分のモデル 1 回実行）
 // =============================================================================
 // run(fullParams, productLoadedData): fullParams は最適化ベクトル＋固定パラメータの並び。
-// productLoadedData は OnsiteLoader::load() が返した ProductLoadedData* を void* で受け取る。
+// productLoadedData は Loader で cfg に従い選択・連結済みの measured/positions（1:1 対応）。
 // 戻り値: 実測と同じ長さ・同じ位置順の予測値の列（残差 = measured - predicted）。
 /** 現地実装: 現場の物理モデルで run() を実装する（または compat_model を include して差し替え） */
 class OnsiteModel : public optimizer::IPhysicalModel {
@@ -92,42 +102,158 @@ public:
 // 4. OnsiteLoader — IProductDataLoader の実装（1 製品分のデータ読込）
 // =============================================================================
 // load(meta): 指定製品の実測・位置等をロードし ProductLoadedData を返す。失敗時は nullptr。
-// ProductLoadedData: measured, positions を 1:1 対応でセットする。
+// position は 0~1 で入れる。cfg の optimization_position_min/max（例: 0.05, 0.95）の範囲外は最適化対象から外す。
+// 製品ごとに複数種類ある場合は data_sets に積み、selectAndConcatDataSets → filterByPositionRange の順で適用。
 /** 現地実装: 現場のファイル/DB から 1 製品分をロードする（または compat_data を include して差し替え） */
 class OnsiteLoader : public optimizer::IProductDataLoader {
 public:
     std::unique_ptr<optimizer::ProductLoadedData> load(const optimizer::ProductMeta& meta) override {
         // ----- テンプレート: 以下を現場の読込仕様に書き換える -----
         auto data = std::make_unique<optimizer::ProductLoadedData>();
-        data->measured = {1.0 - 0.5 * 0.5 + 0.1 * 0.25, 1.0 - 0.5 * 1.0 + 0.1 * 1.0, 1.0 - 0.5 * 1.5 + 0.1 * 2.25};
-        data->positions = {0.5, 1.0, 1.5};
+
+        // パターンA: 1 種類だけのときは measured/positions を直接セット（position は 0~1）
+        data->measured = {1.0 - 0.5 * 0.25 + 0.1 * 0.0625, 1.0 - 0.5 * 0.5 + 0.1 * 0.25, 1.0 - 0.5 * 0.75 + 0.1 * 0.5625};
+        data->positions = {0.25, 0.5, 0.75};
+
+        // パターンB: 複数種類ある場合は data_sets に積み、selectAndConcatDataSets で連結する
+        // optimizer::ProductDataSet ds1;
+        // ds1.data_type_id = "thickness";
+        // ds1.measured = { ... }; ds1.positions = { ... };  // position は 0~1
+        // data->data_sets.push_back(ds1);
+        // ...
+        // selectAndConcatDataSets(data.get());
+
+        selectAndConcatDataSets(data.get());
+        filterByPositionRange(data.get());
+
+        // 結果 CSV に出す追加列（コイル番号・厚み等）
+        // data->extra_columns.push_back({"coil_no", meta.product_id});
+        // data->extra_columns.push_back({"thickness", "1.2"});
         return data;
+    }
+
+private:
+    /** cfg の optimization_data_types に従い、使用する種類だけを選んで measured/positions に連結する。data_sets が空のときは何もしない。 */
+    static void selectAndConcatDataSets(optimizer::ProductLoadedData* data) {
+        if (!data || data->data_sets.empty()) return;
+        data->measured.clear();
+        data->positions.clear();
+        for (const auto& ds : data->data_sets) {
+            if (optimizer::TraceConfig::isDataTypeUsedForOptimization(ds.data_type_id)) {
+                for (double v : ds.measured) data->measured.push_back(v);
+                for (double p : ds.positions) data->positions.push_back(p);
+            }
+        }
+    }
+
+    /** cfg の optimization_position_min/max の範囲外の点を除く（範囲外は最適化対象にしない）。position は 0~1 想定。 */
+    static void filterByPositionRange(optimizer::ProductLoadedData* data) {
+        if (!data || data->positions.size() != data->measured.size()) return;
+        const double lo = optimizer::TraceConfig::getOptimizationPositionMin();
+        const double hi = optimizer::TraceConfig::getOptimizationPositionMax();
+        std::vector<double> m, p;
+        for (size_t i = 0; i < data->positions.size(); ++i) {
+            if (data->positions[i] >= lo && data->positions[i] <= hi) {
+                m.push_back(data->measured[i]);
+                p.push_back(data->positions[i]);
+            }
+        }
+        data->measured = std::move(m);
+        data->positions = std::move(p);
     }
 };
 
 // =============================================================================
 // 5. OnsiteResultWriter — IResultWriter の実装（任意）
 // =============================================================================
-// 適用値のみ計算: writeApplyOnly(fullParams, results)
-// 最適化終了後: writeAfterOptimization(fullParams, results)
-// 使う場合: OptimizerDriver::run(..., &writer) または runApplyOnly(..., writer) に渡す。
+// CSV 書き出しは 3 種類。PLOG (product log), LLOG (length log), DLOG (detail log)。
+// PLOG: 1 製品 1 行・列を横に追加。終了時に flushPLOG で 1 ファイルに書き出し。
+// LLOG: 1 製品 1 ブロック縦連結・全製品 1 ファイル  /  DLOG: 1 製品 1 ファイル
 /** 現地実装: 結果をファイル・DB 等へ出力する場合に実装する */
 class OnsiteResultWriter : public optimizer::IResultWriter {
 public:
+    OnsiteResultWriter() {
+        ro_.setMaxFileBytes(optimizer::TraceConfig::getResultFileMaxBytes());
+        ro_.setMaxTotalBytes(optimizer::TraceConfig::getResultTotalMaxBytes());
+        const std::string& plogFmt = optimizer::TraceConfig::getPLOGFilename();
+        ro_.setPLOGFilename(plogFmt.empty() ? "result/summary_{timestamp}.csv" : plogFmt);
+    }
+
+    ~OnsiteResultWriter() {
+        ro_.flushPLOG();
+    }
+
     void writeApplyOnly(const std::vector<double>& fullParams,
                         const std::vector<optimizer::ProductRunResult>& results) override {
-        // ----- テンプレート: 適用値のみ計算した結果を出力する -----
         (void)fullParams;
-        (void)results;
+        ro_.writePLOG(results, "rmse_apply");
+        // LLOG/DLOG は最適化後のみ出力（writeAfterOptimization で 1 回）
     }
 
     void writeAfterOptimization(const std::vector<double>& fullParams,
                                 const std::vector<optimizer::ProductRunResult>& results) override {
-        // ----- テンプレート: 最適化後の結果を出力する -----
         (void)fullParams;
-        (void)results;
+        ro_.writePLOG(results, "rmse_after");
+        if (optimizer::TraceConfig::getDetailEnabled()) {
+            ro_.writeLLOG(results, detailStart(), detailMaxPoints(),
+                          optimizer::TraceConfig::getLLOGFilename());
+            ro_.writeDLOG(results, detailStart(), detailMaxPoints(),
+                          optimizer::TraceConfig::getDLOGFilename());
+        }
+    }
+
+private:
+    optimizer::RO ro_;
+
+    static size_t detailStart() {
+        int v = optimizer::TraceConfig::getDetailStartIndex();
+        return v >= 0 ? static_cast<size_t>(v) : 0u;
+    }
+    static size_t detailMaxPoints() {
+        int v = optimizer::TraceConfig::getDetailMaxPoints();
+        return v > 0 ? static_cast<size_t>(v) : 256u;
     }
 };
+
+// =============================================================================
+// 6. CSV 書き出し例（RO = ResultOutput の使い方）
+// =============================================================================
+// 実行すると result/example_onsite_{timestamp}.csv にサンプルが出力される。
+// PLOG と同様に、setFilenameSame → 行追加 → flush(Before) → 行追加 → flush(After) で同一ファイルに追記。
+/** RO を使った CSV 書き出しの最小例 */
+static void writeExampleCsv() {
+    ensureResultDir();
+    optimizer::RO ro;
+    ro.setFilenameSame("result/example_onsite_{timestamp}.csv");
+
+    // 1 行目: ヘッダは addColumn の初出で決まる。列を追加して endRow で行確定。
+    ro.addColumn("product_id", "sample_A");
+    ro.addColumn("rmse", 0.0123);
+    ro.addColumn("n_points", 10);
+    ro.endRow();
+    ro.addColumn("product_id", "sample_B");
+    ro.addColumn("rmse", 0.0456);
+    ro.addColumn("n_points", 20);
+    ro.endRow();
+    ro.flush(optimizer::RO::Before);  // ヘッダ + 上記 2 行を書き出し
+
+    // 同じファイルに「後」の行だけ追記（ヘッダは出さない）
+    ro.addColumn("product_id", "sample_A");
+    ro.addColumn("rmse", 0.0089);
+    ro.addColumn("n_points", 10);
+    ro.endRow();
+    ro.addColumn("product_id", "sample_B");
+    ro.addColumn("rmse", 0.0321);
+    ro.addColumn("n_points", 20);
+    ro.endRow();
+    ro.flush(optimizer::RO::After);   // 上記 2 行を追記
+
+    // 別ファイルに 1 本だけ書きたい場合は setFilename で前後を分ける
+    // ro.clear();
+    // ro.setFilename(optimizer::RO::Before, "result/only_before_{timestamp}.csv");
+    // ro.setFilename(optimizer::RO::After,  "result/only_after_{timestamp}.csv");
+    // ro.addColumn("key", "val"); ro.endRow(); ro.flush(optimizer::RO::Before);
+}
 
 }  // namespace
 
@@ -136,6 +262,10 @@ int main() {
 
     Handler handler(configPath);
     optimizer::DataConfig::load(configPath);
+    if (!optimizer::TraceConfig::isOptimizerListValid()) {
+        optimizer::TerminalMessage::error(optimizer::TraceConfig::getOptimizerListError());
+        return 1;
+    }
 
     if (optimizer::TraceConfig::isTraceEnabled() || optimizer::TraceConfig::isDebugEnabled())
         ensureLogDir();
@@ -157,16 +287,16 @@ int main() {
     OnsiteLoader loader;
     std::vector<optimizer::ProductMeta> products = makeProducts();
 
-    // 結果をファイル/DB へ出す場合は OnsiteResultWriter を渡す:
-    //   OnsiteResultWriter resultWriter;
-    //   result = optimizer::OptimizerDriver::run(..., tracePath, "onsite", &resultWriter);
-    const std::string optimizerName = handler.getOptimizersToRun().empty()
-                                          ? "PSO"
-                                          : handler.getOptimizersToRun()[0];
+    // 結果をファイル/DB へ出す場合は OnsiteResultWriter を渡す。
+    // サンプル: 前・後を同じ CSV に出す場合 — 先に runApplyOnly で「前」を書き、run で「後」を追記する。
+    OnsiteResultWriter resultWriter;
+    optimizer::OptimizerDriver::runApplyOnly(mapper, model, loader, products, nullptr, resultWriter);
+
+    const std::string optimizerName = handler.getOptimizersToRun()[0];
     std::string tracePath = optimizer::TraceConfig::isTraceEnabled() ? "log/onsite_trace.csv" : "";
     optimizer::RunResult result = optimizer::OptimizerDriver::run(
         configPath, mapper, model, loader, products, optimizerName,
-        tracePath, "onsite", nullptr);
+        tracePath, "onsite", &resultWriter);
 
     std::cout << "[Onsite] optimizer=" << optimizerName
               << " bestScore=" << result.bestScore
@@ -174,5 +304,9 @@ int main() {
     for (size_t i = 0; i < result.bestParams.size(); ++i)
         std::cout << (i ? "," : "") << result.bestParams[i];
     std::cout << "\n";
+
+    // CSV 書き出し例: result/example_onsite_{timestamp}.csv にサンプルを出力
+    writeExampleCsv();
+
     return 0;
 }

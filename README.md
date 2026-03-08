@@ -10,10 +10,11 @@ optimizer/
 ├── run_tests.sh          # テスト実行
 ├── README.md
 ├── docs/
-│   ├── CODE_READING_GUIDE.md  # コードの読む順番・各モジュール概要（プログラマ向け）
-│   ├── COIL_STARTUP_FLOW.md   # コイルデータ読込・起動フロー（xcoil.txt, バイナリパス, 概要表示）
-│   ├── IMPROVEMENT_PLAN.md   # 改良計画・読解結果
-│   └── USERWORK.md           # USERWORK 一覧
+│   ├── CODE_READING_GUIDE.md     # コードの読む順番・各モジュール概要（プログラマ向け）
+│   ├── COIL_STARTUP_FLOW.md      # コイルデータ読込・起動フロー
+│   ├── OPTIMIZER_PARAMS.md       # 最適化パラメータ説明
+│   ├── REFACTORING_PROPOSAL.md   # リファクタリング提案
+│   └── USERWORK.md               # USERWORK 一覧
 ├── config/
 │   ├── para.cfg             # 最適化パラメータ・モード（trace, optimizer, n_iter_*, pso_demo_mode 等）
 │   └── params_sample.csv    # サンプル設定 CSV

@@ -2,6 +2,7 @@
 #define OPTIMIZER_PRODUCT_PRODUCT_RUN_RESULT_H
 
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace optimizer {
@@ -11,6 +12,7 @@ namespace optimizer {
  *
  * IResultWriter::writeApplyOnly / writeAfterOptimization の引数として渡される。
  * USERWORK: オンサイトの IResultWriter 実装で、この内容を現場仕様の形式で出力する。
+ * extra_columns は ProductLoadedData からコピーされ、結果 CSV の追加列として使える。
  */
 struct ProductRunResult {
     std::string product_id;
@@ -19,6 +21,8 @@ struct ProductRunResult {
     std::vector<double> residuals; /**< 残差（measured - predicted） */
     bool ok = true;
     std::string error_message;
+    /** CSV 用の追加列（名前, 値）。ローダで ProductLoadedData::extra_columns に設定した内容がここにコピーされる。 */
+    std::vector<std::pair<std::string, std::string>> extra_columns;
 };
 
 }  // namespace optimizer
