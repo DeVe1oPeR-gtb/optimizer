@@ -6,7 +6,7 @@
  * @brief 目的関数の共通インターフェース（PSO/DE/LM が呼ぶ評価 API）
  */
 
-#include "EvalResult.h"
+#include "EvalResult.hpp"
 #include <vector>
 
 namespace optimizer {

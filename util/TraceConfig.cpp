@@ -3,7 +3,7 @@
  * @brief config/para.cfg の読込（trace, optimizer, 各最適化器パラメータ）。key=val 形式。
  */
 
-#include "util/TraceConfig.h"
+#include "util/TraceConfig.hpp"
 #include <fstream>
 #include <sstream>
 #include <algorithm>

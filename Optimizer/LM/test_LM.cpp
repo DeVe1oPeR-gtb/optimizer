@@ -1,4 +1,4 @@
-#include "Optimizer/LM/LM.h"
+#include "Optimizer/LM/LM.hpp"
 #include <algorithm>
 #include <cstring>
 #include <iomanip>
@@ -9,7 +9,7 @@
 #include "CppUTest/TestHarness.h"
 
 // Utility
-#include "csvwriter.h"
+#include "csvwriter.hpp"
 
 using std::cout;
 using std::endl;

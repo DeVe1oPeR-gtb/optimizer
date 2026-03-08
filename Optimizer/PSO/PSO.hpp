@@ -1,7 +1,7 @@
 #ifndef D_PSO_H
 #define D_PSO_H
 
-#include "Optimizer.h"
+#include "Optimizer.hpp"
 #include <cmath>
 #include <limits>
 #include <numeric>

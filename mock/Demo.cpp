@@ -3,8 +3,8 @@
  * @brief デモ用の 3 モデル（quadratic, linear, rational_exp）と 3 ローダ。measured を式で生成。USERWORK: 現場では IPhysicalModel / IProductDataLoader を実装に差し替える。
  */
 
-#include "mock/Demo.h"
-#include "product/ProductLoadedData.h"
+#include "mock/Demo.hpp"
+#include "product/ProductLoadedData.hpp"
 #include <cmath>
 #include <cstddef>
 #include <memory>

@@ -3,8 +3,8 @@
 
 /* デモ用モデル・データローダ（後で削除する前提） */
 
-#include "model/IPhysicalModel.h"
-#include "model/IProductDataLoader.h"
+#include "model/IPhysicalModel.hpp"
+#include "model/IProductDataLoader.hpp"
 
 namespace optimizer {
 

@@ -6,8 +6,8 @@
  * @brief ヤコビアン付き目的関数インターフェース（Levenberg–Marquardt 用）
  */
 
-#include "IObjective.h"
-#include "JacobianResult.h"
+#include "IObjective.hpp"
+#include "JacobianResult.hpp"
 #include <vector>
 
 namespace optimizer {

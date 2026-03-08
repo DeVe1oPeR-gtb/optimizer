@@ -3,8 +3,8 @@
  * @brief 最適化ベクトルと全パラメータの対応付け。初期値・上下限・apply_bounds は specs から取得。
  */
 
-#include "ParameterMapper.h"
-#include "CsvParamLoader.h"
+#include "ParameterMapper.hpp"
+#include "CsvParamLoader.hpp"
 #include <stdexcept>
 
 namespace optimizer {

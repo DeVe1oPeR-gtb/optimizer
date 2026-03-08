@@ -1,4 +1,4 @@
-#include "Optimizer/PSO/PSO.h"
+#include "Optimizer/PSO/PSO.hpp"
 #include <algorithm>
 #include <cctype>
 #include <cstring>
@@ -11,7 +11,7 @@
 #include "CppUTest/TestHarness.h"
 
 // Utility
-#include "csvwriter.h"
+#include "csvwriter.hpp"
 
 #ifndef PSO_DEMO_TRACE_FILE
 #define PSO_DEMO_TRACE_FILE "log/PSO_AOT_DEMO_trace.csv"

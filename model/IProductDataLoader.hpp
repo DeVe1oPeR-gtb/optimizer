@@ -1,8 +1,8 @@
 #ifndef OPTIMIZER_MODEL_I_PRODUCT_DATA_LOADER_H
 #define OPTIMIZER_MODEL_I_PRODUCT_DATA_LOADER_H
 
-#include "product/ProductLoadedData.h"
-#include "product/ProductMeta.h"
+#include "product/ProductLoadedData.hpp"
+#include "product/ProductMeta.hpp"
 #include <memory>
 
 namespace optimizer {

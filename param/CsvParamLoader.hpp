@@ -1,7 +1,7 @@
 #ifndef OPTIMIZER_PARAM_CSV_PARAM_LOADER_H
 #define OPTIMIZER_PARAM_CSV_PARAM_LOADER_H
 
-#include "ParamSpec.h"
+#include "ParamSpec.hpp"
 #include <string>
 #include <vector>
 

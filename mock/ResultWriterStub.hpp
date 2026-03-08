@@ -1,7 +1,7 @@
 #ifndef OPTIMIZER_MOCK_RESULT_WRITER_STUB_H
 #define OPTIMIZER_MOCK_RESULT_WRITER_STUB_H
 
-#include "util/IResultWriter.h"
+#include "util/IResultWriter.hpp"
 
 namespace optimizer {
 

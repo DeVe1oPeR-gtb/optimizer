@@ -3,7 +3,7 @@
  * @brief 最適化の反復ログをターミナルに出力するヘルパ（iter, score, position）。
  */
 
-#include "util/IterationLog.h"
+#include "util/IterationLog.hpp"
 #include <iostream>
 
 namespace optimizer {

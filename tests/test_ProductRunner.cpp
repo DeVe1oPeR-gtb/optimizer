@@ -1,7 +1,7 @@
 #include "CppUTest/TestHarness.h"
-#include "product/ProductRunner.h"
-#include "product/ProductMeta.h"
-#include "mock/Mock.h"
+#include "product/ProductRunner.hpp"
+#include "product/ProductMeta.hpp"
+#include "mock/Mock.hpp"
 #include <vector>
 
 TEST_GROUP(ProductRunner) {};

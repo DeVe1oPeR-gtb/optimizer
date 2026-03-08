@@ -6,7 +6,7 @@
  * @brief 最適化まわりの設定（trace, optimizer, 各最適化器のパラメータ）の読込と取得。
  */
 
-#include "util/RunConfig.h"
+#include "util/RunConfig.hpp"
 #include <iosfwd>
 #include <string>
 #include <vector>

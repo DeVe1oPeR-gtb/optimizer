@@ -163,7 +163,7 @@
 | **OptimizerDriver.h/.cpp** | run(...) で PSO/DE/LM を分岐。runPSO/runDE/runLM 内で Objective, mapper の bounds/initial を使用。runLM は adaptive lambda + ステップ採用/却下 + bounds クリップ。runApplyOnly(mapper, model, loader, products, dbProvider, resultWriter) |
 | **Handler.h/.cpp** | 設定ファイルを読んで getOptimizersToRun() |
 | **IterationLog.h/.cpp** | 反復ログ用 |
-| **csvwriter.h** | CSV 出力ヘルパ（必要に応じて） |
+| **csvwriter.hpp** | CSV 出力ヘルパ（必要に応じて） |
 
 ### mock/
 

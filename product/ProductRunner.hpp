@@ -1,11 +1,11 @@
 #ifndef OPTIMIZER_PRODUCT_PRODUCT_RUNNER_H
 #define OPTIMIZER_PRODUCT_PRODUCT_RUNNER_H
 
-#include "product/ProductMeta.h"
-#include "product/ProductLoadedData.h"
-#include "product/ProductResidualBlock.h"
-#include "model/IPhysicalModel.h"
-#include "model/IProductDataLoader.h"
+#include "product/ProductMeta.hpp"
+#include "product/ProductLoadedData.hpp"
+#include "product/ProductResidualBlock.hpp"
+#include "model/IPhysicalModel.hpp"
+#include "model/IProductDataLoader.hpp"
 #include <memory>
 #include <vector>
 

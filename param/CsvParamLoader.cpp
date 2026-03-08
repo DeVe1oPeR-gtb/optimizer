@@ -3,7 +3,7 @@
  * @brief CSV から ParamSpec 列を読み込み、検証する。列: param_name, enable_opt, init_mode, init_value, db_key, lower, upper, apply_bounds, note
  */
 
-#include "CsvParamLoader.h"
+#include "CsvParamLoader.hpp"
 #include <fstream>
 #include <sstream>
 #include <set>

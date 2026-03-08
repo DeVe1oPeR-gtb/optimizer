@@ -1,7 +1,7 @@
 #ifndef OPTIMIZER_PARAM_PARAMETER_MAPPER_H
 #define OPTIMIZER_PARAM_PARAMETER_MAPPER_H
 
-#include "ParamSpec.h"
+#include "ParamSpec.hpp"
 #include <vector>
 #include <string>
 

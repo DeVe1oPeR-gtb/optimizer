@@ -3,8 +3,8 @@
 
 /* テスト用モック（本番では IPhysicalModel / IProductDataLoader の実装に差し替え） */
 
-#include "model/IPhysicalModel.h"
-#include "model/IProductDataLoader.h"
+#include "model/IPhysicalModel.hpp"
+#include "model/IProductDataLoader.hpp"
 
 namespace optimizer {
 

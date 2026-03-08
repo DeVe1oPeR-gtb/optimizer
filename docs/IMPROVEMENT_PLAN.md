@@ -48,7 +48,7 @@
 - **責務**: ヘッダのみ存在。アルゴリズム名・ファイル名と pre/post 処理の宣言があるが未実装。`string` が無修飾でコンパイルエラーになる可能性。
 - **所見**: 今回の「BatchEvaluationHandler」とは別物。既存 Handler は使わず、新規に BatchEvaluationHandler を「アルゴリズム非依存」で定義する。
 
-### 1.6 util（csvwriter.h）
+### 1.6 util（csvwriter.hpp）
 
 - **責務**: CSV **出力**用。行数固定の 1/2/3 次元配列をヘッダ付きで書き出す。
 - **所見**: 設定用 CSV **読込**（param_name, enable_opt, init_mode 等）は未実装。ParameterMapper 用の読込は新規実装。
@@ -147,7 +147,7 @@ optimizer/
 ├── Handler/               # 既存（未使用のままでも可。Batch は product/ に配置）
 │   └── Handler.h
 ├── util/
-│   └── csvwriter.h
+│   └── csvwriter.hpp
 ├── tests/
 │   ├── test_ParameterMapper.cpp
 │   ├── test_ProductRunner.cpp
