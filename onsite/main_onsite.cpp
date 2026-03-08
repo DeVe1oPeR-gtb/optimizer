@@ -29,6 +29,8 @@
 #include <cmath>
 #include <sys/stat.h>
 
+using namespace optimizer;
+
 namespace {
 
 static void ensureLogDir() {
@@ -55,12 +57,12 @@ static void ensureResultDir() {
 //            init_value, db_key, lower, upper, note, apply_bounds.
 // CSV から読む例: CsvParamLoader().load("config/params.csv", err) で std::vector<ParamSpec> 取得。
 /** 現地実装: CSV または現場設定から ParamSpec を組み立てる */
-static std::vector<optimizer::ParamSpec> makeSpecs() {
+static std::vector<ParamSpec> makeSpecs() {
     // ----- テンプレート: 以下を現場仕様に書き換える -----
     return {
-        {"p0", 1, optimizer::InitMode::Manual, 1.0, "", -5.0, 5.0, ""},
-        {"p1", 1, optimizer::InitMode::Manual, -0.5, "", -5.0, 5.0, ""},
-        {"p2", 1, optimizer::InitMode::Manual, 0.1, "", -5.0, 5.0, ""},
+        {"p0", 1, InitMode::Manual, 1.0, "", -5.0, 5.0, ""},
+        {"p1", 1, InitMode::Manual, -0.5, "", -5.0, 5.0, ""},
+        {"p2", 1, InitMode::Manual, 0.1, "", -5.0, 5.0, ""},
     };
 }
 
@@ -70,7 +72,7 @@ static std::vector<optimizer::ParamSpec> makeSpecs() {
 // 戻り値: 最適化対象とする製品の ProductMeta の列。
 // ProductMeta: product_id, file_path, excluded_data_indices(対象外データ点の 0 始まりインデックス、空で全点対象)。
 /** 現地実装: 現場のコイル/製品一覧から ProductMeta を組み立てる */
-static std::vector<optimizer::ProductMeta> makeProducts() {
+static std::vector<ProductMeta> makeProducts() {
     // ----- テンプレート: 以下を現場仕様に書き換える -----
     return {{"product1", ""}};
 }
@@ -82,12 +84,12 @@ static std::vector<optimizer::ProductMeta> makeProducts() {
 // productLoadedData は Loader で cfg に従い選択・連結済みの measured/positions（1:1 対応）。
 // 戻り値: 実測と同じ長さ・同じ位置順の予測値の列（残差 = measured - predicted）。
 /** 現地実装: 現場の物理モデルで run() を実装する（または compat_model を include して差し替え） */
-class OnsiteModel : public optimizer::IPhysicalModel {
+class OnsiteModel : public IPhysicalModel {
 public:
     std::vector<double> run(const std::vector<double>& fullParams,
                             const void* productLoadedData) override {
         // ----- テンプレート: 以下を現場の物理モデルに書き換える -----
-        const auto* data = static_cast<const optimizer::ProductLoadedData*>(productLoadedData);
+        const auto* data = static_cast<const ProductLoadedData*>(productLoadedData);
         if (!data || data->positions.empty()) return {};
         std::vector<double> pred(data->positions.size());
         for (size_t i = 0; i < data->positions.size(); ++i) {
@@ -105,18 +107,18 @@ public:
 // position は 0~1 で入れる。cfg の optimization_position_min/max（例: 0.05, 0.95）の範囲外は最適化対象から外す。
 // 製品ごとに複数種類ある場合は data_sets に積み、selectAndConcatDataSets → filterByPositionRange の順で適用。
 /** 現地実装: 現場のファイル/DB から 1 製品分をロードする（または compat_data を include して差し替え） */
-class OnsiteLoader : public optimizer::IProductDataLoader {
+class OnsiteLoader : public IProductDataLoader {
 public:
-    std::unique_ptr<optimizer::ProductLoadedData> load(const optimizer::ProductMeta& meta) override {
+    std::unique_ptr<ProductLoadedData> load(const ProductMeta& meta) override {
         // ----- テンプレート: 以下を現場の読込仕様に書き換える -----
-        auto data = std::make_unique<optimizer::ProductLoadedData>();
+        auto data = std::make_unique<ProductLoadedData>();
 
         // パターンA: 1 種類だけのときは measured/positions を直接セット（position は 0~1）
         data->measured = {1.0 - 0.5 * 0.25 + 0.1 * 0.0625, 1.0 - 0.5 * 0.5 + 0.1 * 0.25, 1.0 - 0.5 * 0.75 + 0.1 * 0.5625};
         data->positions = {0.25, 0.5, 0.75};
 
         // パターンB: 複数種類ある場合は data_sets に積み、selectAndConcatDataSets で連結する
-        // optimizer::ProductDataSet ds1;
+        // ProductDataSet ds1;
         // ds1.data_type_id = "thickness";
         // ds1.measured = { ... }; ds1.positions = { ... };  // position は 0~1
         // data->data_sets.push_back(ds1);
@@ -134,12 +136,12 @@ public:
 
 private:
     /** cfg の optimization_data_types に従い、使用する種類だけを選んで measured/positions に連結する。data_sets が空のときは何もしない。 */
-    static void selectAndConcatDataSets(optimizer::ProductLoadedData* data) {
+    static void selectAndConcatDataSets(ProductLoadedData* data) {
         if (!data || data->data_sets.empty()) return;
         data->measured.clear();
         data->positions.clear();
         for (const auto& ds : data->data_sets) {
-            if (optimizer::ParaConfig::isDataTypeUsedForOptimization(ds.data_type_id)) {
+            if (ParaConfig::isDataTypeUsedForOptimization(ds.data_type_id)) {
                 for (double v : ds.measured) data->measured.push_back(v);
                 for (double p : ds.positions) data->positions.push_back(p);
             }
@@ -147,10 +149,10 @@ private:
     }
 
     /** cfg の optimization_position_min/max の範囲外の点を除く（範囲外は最適化対象にしない）。position は 0~1 想定。 */
-    static void filterByPositionRange(optimizer::ProductLoadedData* data) {
+    static void filterByPositionRange(ProductLoadedData* data) {
         if (!data || data->positions.size() != data->measured.size()) return;
-        const double lo = optimizer::ParaConfig::getOptimizationPositionMin();
-        const double hi = optimizer::ParaConfig::getOptimizationPositionMax();
+        const double lo = ParaConfig::getOptimizationPositionMin();
+        const double hi = ParaConfig::getOptimizationPositionMax();
         std::vector<double> m, p;
         for (size_t i = 0; i < data->positions.size(); ++i) {
             if (data->positions[i] >= lo && data->positions[i] <= hi) {
@@ -172,31 +174,31 @@ private:
 // ON/OFF はコンフィグ plog_enabled, llog_enabled, dlog_enabled（para.cfg）。
 //
 /** PLOG を出すか。コンフィグ plog_enabled を読む。ユーザーはここを差し替えてよい。 */
-static bool userPLOGEnabled() { return optimizer::ParaConfig::getPLOGEnabled(); }
+static bool userPLOGEnabled() { return ParaConfig::getPLOGEnabled(); }
 /** PLOG の出力先ファイル名フォーマット。{timestamp}, {product_id} 利用可。 */
 static std::string userPLOGFilename() {
-    std::string s = optimizer::ParaConfig::getPLOGFilename();
+    std::string s = ParaConfig::getPLOGFilename();
     return s.empty() ? "result/plog_{timestamp}.csv" : s;
 }
 
 /** LLOG を出すか。コンフィグ llog_enabled を読む。 */
-static bool userLLOGEnabled() { return optimizer::ParaConfig::getLLOGEnabled(); }
+static bool userLLOGEnabled() { return ParaConfig::getLLOGEnabled(); }
 /** LLOG の出力先。全製品 1 ファイル。 */
-static std::string userLLOGFilename() { return optimizer::ParaConfig::getLLOGFilename(); }
+static std::string userLLOGFilename() { return ParaConfig::getLLOGFilename(); }
 /** LLOG の範囲（全製品共通）。start_index, max_points。 */
 static void userLLOGRange(size_t& startIndex, size_t& maxPoints) {
-    int s = optimizer::ParaConfig::getDetailStartIndex();
-    int m = optimizer::ParaConfig::getDetailMaxPoints();
+    int s = ParaConfig::getDetailStartIndex();
+    int m = ParaConfig::getDetailMaxPoints();
     startIndex = s >= 0 ? static_cast<size_t>(s) : 0u;
     maxPoints = m > 0 ? static_cast<size_t>(m) : 256u;
 }
 
 /** DLOG を出すか。コンフィグ dlog_enabled を読む。 */
-static bool userDLOGEnabled() { return optimizer::ParaConfig::getDLOGEnabled(); }
+static bool userDLOGEnabled() { return ParaConfig::getDLOGEnabled(); }
 /** DLOG の出力先。1 製品 1 ファイル。{product_id}, {timestamp} 利用可。 */
-static std::string userDLOGFilename() { return optimizer::ParaConfig::getDLOGFilename(); }
+static std::string userDLOGFilename() { return ParaConfig::getDLOGFilename(); }
 /** DLOG の製品ごとの (start_index, max_points)。results.size() と一致させる。 */
-static std::vector<std::pair<size_t, size_t>> userDlogRanges(const std::vector<optimizer::ProductRunResult>& results) {
+static std::vector<std::pair<size_t, size_t>> userDlogRanges(const std::vector<ProductRunResult>& results) {
     std::vector<std::pair<size_t, size_t>> ranges;
     ranges.reserve(results.size());
     size_t gStart, gMax;
@@ -214,11 +216,11 @@ static std::vector<std::pair<size_t, size_t>> userDlogRanges(const std::vector<o
 // =============================================================================
 // 5.2 OnsiteResultWriter — IResultWriter（PLOG/LLOG/DLOG は add / endRow で書き込む）
 // =============================================================================
-class OnsiteResultWriter : public optimizer::IResultWriter {
+class OnsiteResultWriter : public IResultWriter {
 public:
     OnsiteResultWriter() {
-        ro_.setMaxFileBytes(optimizer::ParaConfig::getResultFileMaxBytes());
-        ro_.setMaxTotalBytes(optimizer::ParaConfig::getResultTotalMaxBytes());
+        ro_.setMaxFileBytes(ParaConfig::getResultFileMaxBytes());
+        ro_.setMaxTotalBytes(ParaConfig::getResultTotalMaxBytes());
         if (userPLOGEnabled() && !userPLOGFilename().empty()) ro_.setPLOGFilename(userPLOGFilename());
         if (userLLOGEnabled() && !userLLOGFilename().empty()) ro_.setLLOGFilename(userLLOGFilename());
         if (userDLOGEnabled() && !userDLOGFilename().empty()) ro_.setDLOGFilename(userDLOGFilename());
@@ -230,14 +232,14 @@ public:
     }
 
     void writeApplyOnly(const std::vector<double>& fullParams,
-                        const std::vector<optimizer::ProductRunResult>& results) override {
+                        const std::vector<ProductRunResult>& results) override {
         (void)fullParams;
         if (userPLOGEnabled())
             ro_.writePLOG(results, "rmse_apply");  // 列を横に追加。PLOG_add/PLOG_endRow で自前の列も可。
     }
 
     void writeAfterOptimization(const std::vector<double>& fullParams,
-                                const std::vector<optimizer::ProductRunResult>& results) override {
+                                const std::vector<ProductRunResult>& results) override {
         (void)fullParams;
         if (userPLOGEnabled())
             ro_.writePLOG(results, "rmse_after");
@@ -288,7 +290,7 @@ public:
     }
 
 private:
-    optimizer::RO ro_;
+RO ro_;
 };
 
 // =============================================================================
@@ -302,7 +304,7 @@ private:
 /** RO を使った CSV 書き出しの最小例 */
 static void writeExampleCsv() {
     ensureResultDir();
-    optimizer::RO ro;
+RO ro;
     ro.setFilenameSame("result/example_onsite_{timestamp}.csv");
 
     // 1 行目: ヘッダは addColumn の初出で決まる。列を追加して endRow で行確定。
@@ -314,7 +316,7 @@ static void writeExampleCsv() {
     ro.addColumn("rmse", 0.0456);
     ro.addColumn("n_points", 20);
     ro.endRow();
-    ro.flush(optimizer::RO::Before);  // ヘッダ + 上記 2 行を書き出し
+    ro.flush(RO::Before);  // ヘッダ + 上記 2 行を書き出し
 
     // 同じファイルに「後」の行だけ追記（ヘッダは出さない）
     ro.addColumn("product_id", "sample_A");
@@ -325,13 +327,13 @@ static void writeExampleCsv() {
     ro.addColumn("rmse", 0.0321);
     ro.addColumn("n_points", 20);
     ro.endRow();
-    ro.flush(optimizer::RO::After);   // 上記 2 行を追記
+    ro.flush(RO::After);   // 上記 2 行を追記
 
     // 別ファイルに 1 本だけ書きたい場合は setFilename で前後を分ける
     // ro.clear();
-    // ro.setFilename(optimizer::RO::Before, "result/only_before_{timestamp}.csv");
-    // ro.setFilename(optimizer::RO::After,  "result/only_after_{timestamp}.csv");
-    // ro.addColumn("key", "val"); ro.endRow(); ro.flush(optimizer::RO::Before);
+    // ro.setFilename(RO::Before, "result/only_before_{timestamp}.csv");
+    // ro.setFilename(RO::After,  "result/only_after_{timestamp}.csv");
+    // ro.addColumn("key", "val"); ro.endRow(); ro.flush(RO::Before);
 }
 
 }  // namespace
@@ -340,40 +342,40 @@ int main() {
     const std::string configPath = "config/para.cfg";
 
     Handler handler(configPath);
-    optimizer::DataConfig::load(configPath);
-    if (!optimizer::ParaConfig::isOptimizerListValid()) {
-        optimizer::TerminalMessage::error(optimizer::ParaConfig::getOptimizerListError());
+    DataConfig::load(configPath);
+    if (!ParaConfig::isOptimizerListValid()) {
+        TerminalMessage::error(ParaConfig::getOptimizerListError());
         return 1;
     }
 
-    if (optimizer::ParaConfig::isTraceEnabled() || optimizer::ParaConfig::isDebugEnabled())
+    if (ParaConfig::isTraceEnabled() || ParaConfig::isDebugEnabled())
         ensureLogDir();
     static std::ofstream s_debugLog;
-    if (optimizer::ParaConfig::isDebugEnabled()) {
-        if (optimizer::openLogWithRotation("log/debug.log", s_debugLog, optimizer::ParaConfig::getDebugLogMaxBytes()))
-            optimizer::ParaConfig::setDebugStream(&s_debugLog);
+    if (ParaConfig::isDebugEnabled()) {
+        if (openLogWithRotation("log/debug.log", s_debugLog, ParaConfig::getDebugLogMaxBytes()))
+            ParaConfig::setDebugStream(&s_debugLog);
     }
 
-    optimizer::ParameterMapper mapper;
+    ParameterMapper mapper;
     mapper.setSpecs(makeSpecs());
     std::string err;
     if (!mapper.validate(err)) {
-        optimizer::TerminalMessage::error("ParameterMapper: " + err);
+        TerminalMessage::error("ParameterMapper: " + err);
         return 1;
     }
 
     OnsiteModel model;
     OnsiteLoader loader;
-    std::vector<optimizer::ProductMeta> products = makeProducts();
+    std::vector<ProductMeta> products = makeProducts();
 
     // 結果をファイル/DB へ出す場合は OnsiteResultWriter を渡す。
     // サンプル: 前・後を同じ CSV に出す場合 — 先に runApplyOnly で「前」を書き、run で「後」を追記する。
     OnsiteResultWriter resultWriter;
-    optimizer::OptimizerDriver::runApplyOnly(mapper, model, loader, products, nullptr, resultWriter);
+    OptimizerDriver::runApplyOnly(mapper, model, loader, products, nullptr, resultWriter);
 
     const std::string optimizerName = handler.getOptimizersToRun()[0];
-    std::string tracePath = optimizer::ParaConfig::isTraceEnabled() ? "log/onsite_trace.csv" : "";
-    optimizer::RunResult result = optimizer::OptimizerDriver::run(
+    std::string tracePath = ParaConfig::isTraceEnabled() ? "log/onsite_trace.csv" : "";
+    RunResult result = OptimizerDriver::run(
         configPath, mapper, model, loader, products, optimizerName,
         tracePath, "onsite", &resultWriter);
 
