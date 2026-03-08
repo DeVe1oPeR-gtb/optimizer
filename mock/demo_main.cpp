@@ -15,6 +15,7 @@
 #include <string>
 #include <sys/stat.h>
 
+// デモ用。現場では CSV や DB から ParamSpec を組み立てる。
 static std::vector<optimizer::ParamSpec> makeSpecs() {
     return {
         {"p0", 1, optimizer::InitMode::Manual, 1.0, "", -5.0, 5.0, ""},
@@ -83,6 +84,7 @@ int main() {
                 std::string path = optimizer::CoilDataPath::buildPath(dataPath, e.coil_no, e.yyyymmdd, structName);
                 if (optimizer::CoilDataPath::fileExists(path)) ++existsCount;
             }
+            // コイル一覧とバイナリの存在件数を表示。現場で xcoil/data_path の設定確認に使う。
             std::vector<std::string> lines = {
                 "xcoil_file: " + xcoilPath,
                 "data_path: " + dataPath,

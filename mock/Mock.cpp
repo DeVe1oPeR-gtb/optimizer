@@ -24,6 +24,7 @@ std::vector<double> MockPhysicalModel::run(const std::vector<double>& fullParams
 
 std::unique_ptr<ProductLoadedData> MockProductDataLoader::load(const ProductMeta& meta) {
     auto data = std::make_unique<ProductLoadedData>();
+    // テストで製品ごとに点数を変えたいので product_id の長さで n を変える。
     size_t n = 4 + (meta.product_id.size() % 4);
     data->measured.resize(n, 1.0);
     data->positions.resize(n, 0.0);

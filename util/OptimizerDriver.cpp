@@ -30,7 +30,7 @@
 
 namespace optimizer {
 
-/** debug=on のとき、オンサイトで必要な入力が揃っているかチェックしログ出力する。 */
+// debug=on のときだけ実行。オンサイトで設定・パラメータ・製品が揃っているか事前に確認するため。
 static void checkRequiredInputs(const std::string& configPath,
                                 ParameterMapper& mapper,
                                 const std::vector<ProductMeta>& products,
@@ -84,6 +84,7 @@ static void checkRequiredInputs(const std::string& configPath,
     ParaConfig::logDebug("--- end check ---");
 }
 
+// 1 回のパラメータベクトルで全製品を評価。最適化の目的関数値計算や適用のみ出力で使う。
 static std::vector<ProductRunResult> computeProductResults(
     IPhysicalModel& model,
     IProductDataLoader& loader,
@@ -305,6 +306,7 @@ static RunResult runLM(Objective& objective,
 
     std::vector<double> lo = mapper.getLowerBounds(), up = mapper.getUpperBounds();
     std::vector<bool> applyBounds = mapper.getApplyBounds();
+    // LM は反復ごとに z を更新。ParaConfig::isLmApplyBoundsEnabled と mapper の apply_bounds でクリップするか決める。
 
     for (int iter = 0; iter < nIter; ++iter) {
         JacobianResult jr = objective.evaluateWithJacobian(z);

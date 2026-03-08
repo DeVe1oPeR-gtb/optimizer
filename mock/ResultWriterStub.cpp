@@ -7,6 +7,7 @@
 
 namespace optimizer {
 
+// 結果出力が不要なテスト・デモ用。何も書き出さないので IResultWriter のインターフェースだけ満たす。
 void ResultWriterStub::writeApplyOnly(const std::vector<double>& /* fullParams */,
                                        const std::vector<ProductRunResult>& /* results */) {}
 

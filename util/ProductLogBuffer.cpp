@@ -41,6 +41,7 @@ void ProductLogBuffer::write(const std::vector<ProductRunResult>& results, const
         }
         return;
     }
+    // 2回目以降は列を追加。product_id で行を突き合わせるので、複数回 write で横に列が増える。
     plogHeaders_.push_back(rmseHeader);
     for (auto& row : plogRows_) {
         if (row.empty()) { row.push_back(""); continue; }
@@ -79,6 +80,7 @@ size_t ProductLogBuffer::estimateBytes() const {
     for (const auto& row : plogRows_)
         for (const auto& cell : row) n += cell.size() + 2;
     n += 200;
+    // ヘッダ行・改行・クォート等のオーバーヘッドを見込む。厳密でなくよいので +200 で余裕を持たせる。
     return n;
 }
 
