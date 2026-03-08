@@ -1,7 +1,7 @@
 #ifndef OPTIMIZER_UTIL_I_RESULT_WRITER_H
 #define OPTIMIZER_UTIL_I_RESULT_WRITER_H
 
-#include "product/ProductRunResult.h"
+#include "product/ProductRunResult.hpp"
 #include <vector>
 
 namespace optimizer {

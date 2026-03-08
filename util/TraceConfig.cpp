@@ -3,17 +3,20 @@
  * @brief config/para.cfg の読込（trace, optimizer, 各最適化器パラメータ）。key=val 形式。
  */
 
-#include "util/TraceConfig.h"
+#include "util/TraceConfig.hpp"
 #include <fstream>
 #include <sstream>
 #include <algorithm>
 #include <cctype>
 #include <cstdlib>
+#include <iostream>
 
 namespace optimizer {
 
 bool TraceConfig::traceEnabled_ = false;
+bool TraceConfig::debugEnabled_ = false;
 std::ostream* TraceConfig::traceStream_ = nullptr;
+std::ostream* TraceConfig::debugStream_ = nullptr;
 std::vector<std::string> TraceConfig::optimizersToRun_ = {"PSO", "DE", "LM"};
 bool TraceConfig::lmApplyBoundsEnabled_ = true;
 int TraceConfig::nIterPso_ = 120;
@@ -35,9 +38,12 @@ double TraceConfig::lmLambdaMax_ = 1e12;
 double TraceConfig::lmLambdaDown_ = 0.5;
 double TraceConfig::lmLambdaUp_ = 10.0;
 int TraceConfig::lmMaxTry_ = 8;
+size_t TraceConfig::traceLogMaxBytes_ = 10 * 1024 * 1024;   // 10 MiB
+size_t TraceConfig::debugLogMaxBytes_ = 1 * 1024 * 1024;   // 1 MiB
 
 void TraceConfig::loadFromStruct(const RunConfig& config) {
     traceEnabled_ = config.trace_enabled;
+    /* debug は loadFromStruct では変更しない（cfg の debug= のみ） */
     optimizersToRun_ = config.optimizer_names.empty()
         ? std::vector<std::string>{"PSO", "DE", "LM"}
         : config.optimizer_names;
@@ -67,6 +73,16 @@ static double parseDouble(const std::string& val, double defaultVal) {
     return x;
 }
 
+static long parsePositiveLong(const std::string& val, long defaultVal) {
+    const char* p = val.c_str();
+    while (*p == ' ' || *p == '\t') ++p;
+    if (*p == '\0') return defaultVal;
+    char* end = nullptr;
+    long n = std::strtol(p, &end, 10);
+    if (end == p || n < 0) return defaultVal;
+    return n;
+}
+
 void TraceConfig::load(const std::string& path) {
     std::ifstream f(path);
     if (!f) return;
@@ -90,6 +106,10 @@ void TraceConfig::load(const std::string& path) {
             std::string v;
             for (char c : val) v += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
             traceEnabled_ = (v == "on" || v == "1" || v == "true" || v == "yes");
+        } else if (key == "debug") {
+            std::string v;
+            for (char c : val) v += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+            debugEnabled_ = (v == "on" || v == "1" || v == "true" || v == "yes");
         } else if (key == "lm_apply_bounds") {
             std::string v;
             for (char c : val) v += static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
@@ -143,12 +163,32 @@ void TraceConfig::load(const std::string& path) {
         } else if (key == "lm_max_try") {
             int v = parsePositiveInt(val, lmMaxTry_);
             lmMaxTry_ = (v >= 1) ? v : 1;
+        } else if (key == "trace_log_max_bytes") {
+            long v = parsePositiveLong(val, static_cast<long>(traceLogMaxBytes_));
+            traceLogMaxBytes_ = (v > 0) ? static_cast<size_t>(v) : traceLogMaxBytes_;
+        } else if (key == "debug_log_max_bytes") {
+            long v = parsePositiveLong(val, static_cast<long>(debugLogMaxBytes_));
+            debugLogMaxBytes_ = (v > 0) ? static_cast<size_t>(v) : debugLogMaxBytes_;
         }
         }
     }
 }
 
 bool TraceConfig::isTraceEnabled() { return traceEnabled_; }
+bool TraceConfig::isDebugEnabled() { return debugEnabled_; }
+std::ostream* TraceConfig::getDebugStream() { return debugStream_; }
+void TraceConfig::setDebugStream(std::ostream* s) { debugStream_ = s; }
+
+void TraceConfig::logDebug(const std::string& message) {
+    if (!debugEnabled_) return;
+    std::ostream* out = debugStream_ ? debugStream_ : &std::cerr;
+    *out << "[debug] " << message << "\n";
+    if (out != &std::cerr) out->flush();
+}
+
+size_t TraceConfig::getTraceLogMaxBytes() { return traceLogMaxBytes_; }
+size_t TraceConfig::getDebugLogMaxBytes() { return debugLogMaxBytes_; }
+
 bool TraceConfig::isLmApplyBoundsEnabled() { return lmApplyBoundsEnabled_; }
 const std::vector<std::string>& TraceConfig::getOptimizersToRun() { return optimizersToRun_; }
 std::ostream* TraceConfig::getTraceStream() { return traceStream_; }

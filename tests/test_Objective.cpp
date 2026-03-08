@@ -1,11 +1,10 @@
 #include "CppUTest/TestHarness.h"
-#include "objective/Objective.h"
-#include "param/ParameterMapper.h"
-#include "param/ParamSpec.h"
-#include "product/BatchEvaluationHandler.h"
-#include "product/ProductRunner.h"
-#include "product/ProductMeta.h"
-#include "mock/Mock.h"
+#include "objective/Objective.hpp"
+#include "param/param.hpp"
+#include "product/BatchEvaluationHandler.hpp"
+#include "product/ProductRunner.hpp"
+#include "product/ProductMeta.hpp"
+#include "mock/Mock.hpp"
 #include <vector>
 
 TEST_GROUP(Objective) {};

@@ -3,8 +3,8 @@
  * @brief 目的関数の実装: 最適化ベクトルを全パラメータに展開し、バッチ評価して残差ノルムを返す。
  */
 
-#include "objective/Objective.h"
-#include "product/ResidualAssembly.h"
+#include "objective/Objective.hpp"
+#include "product/ResidualAssembly.hpp"
 #include <cmath>
 #include <numeric>
 

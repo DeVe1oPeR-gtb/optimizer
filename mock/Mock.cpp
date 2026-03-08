@@ -1,5 +1,5 @@
-#include "mock/Mock.h"
-#include "product/ProductLoadedData.h"
+#include "mock/Mock.hpp"
+#include "product/ProductLoadedData.hpp"
 #include <cstddef>
 #include <memory>
 #include <numeric>

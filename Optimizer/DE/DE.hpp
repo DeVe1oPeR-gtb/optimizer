@@ -1,7 +1,7 @@
 #ifndef DE_H
 #define DE_H
 
-#include "Optimizer.h"
+#include "Optimizer.hpp"
 #include <vector>
 #include <random>
 #include <iosfwd>

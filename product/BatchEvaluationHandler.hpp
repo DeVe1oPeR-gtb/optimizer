@@ -1,9 +1,9 @@
 #ifndef OPTIMIZER_PRODUCT_BATCH_EVALUATION_HANDLER_H
 #define OPTIMIZER_PRODUCT_BATCH_EVALUATION_HANDLER_H
 
-#include "product/ProductMeta.h"
-#include "product/ResidualAssembly.h"
-#include "product/ProductRunner.h"
+#include "product/ProductMeta.hpp"
+#include "product/ResidualAssembly.hpp"
+#include "product/ProductRunner.hpp"
 #include <vector>
 
 namespace optimizer {

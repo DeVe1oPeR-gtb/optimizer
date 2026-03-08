@@ -1,20 +1,20 @@
-#include "PSO/PSO.h"
+#include "PSO/PSO.hpp"
 #include <iomanip>
 #include <iostream>
 
 template <typename T>
 PSO<T>::PSO(int num_particles, int num_dim, std::vector<T> w, std::vector<T> c1, std::vector<T> c2, std::vector<T> ul_bound, std::vector<T> ll_bound, unsigned int seed)
     : Optimizer(),
-      num_dim_(num_dim), w_(w), c1_(c1), c2_(c2), ul_bound_(ul_bound), ll_bound_(ll_bound),
-      rng_(seed != 0u ? seed : static_cast<unsigned int>(std::random_device{}())) {
+      num_dim_(num_dim), w_(w), c1_(c1), c2_(c2), rng_(seed != 0u ? seed : static_cast<unsigned int>(std::random_device{}())),
+      ul_bound_(ul_bound), ll_bound_(ll_bound) {
 
     // 粒子の初期化
-    particles_.resize(num_particles);
-    for (int i = 0; i < particles_.size(); ++i) {
+    particles_.resize(static_cast<size_t>(num_particles));
+    for (size_t i = 0; i < particles_.size(); ++i) {
         Particle *p = &particles_[i];
-        p->position.resize(num_dim_);
-        p->velocity.resize(num_dim_, 0.0); // 速度は0に初期化
-        p->best_position.resize(num_dim_);
+        p->position.resize(static_cast<size_t>(num_dim_));
+        p->velocity.resize(static_cast<size_t>(num_dim_), 0.0); // 速度は0に初期化
+        p->best_position.resize(static_cast<size_t>(num_dim_));
         for (int d = 0; d < num_dim_; ++d) {
             T ul = ul_bound_[d];
             T ll = ll_bound_[d];
@@ -23,7 +23,7 @@ PSO<T>::PSO(int num_particles, int num_dim, std::vector<T> w, std::vector<T> c1,
             p->best_position[d] = p->position[d];
             p->my_stats.initialize();
             p->best_stats.initialize();
-            p->no = i;
+            p->no = static_cast<int>(i);
         }
         p->my_score   = std::numeric_limits<T>::max();
         p->best_score = std::numeric_limits<T>::max();
@@ -44,7 +44,7 @@ const std::vector<typename PSO<T>::Particle> &PSO<T>::getParticles() { return pa
 
 template <typename T>
 void PSO<T>::initParticles(const std::vector<T> &ul_ini_bound, const std::vector<T> &ll_ini_bound) {
-    for (int i = 0; i < particles_.size(); ++i) {
+    for (size_t i = 0; i < particles_.size(); ++i) {
         Particle *p = &particles_[i];
         for (int d = 0; d < num_dim_; ++d) {
             T ul = ul_ini_bound[d];
@@ -58,7 +58,7 @@ void PSO<T>::initParticles(const std::vector<T> &ul_ini_bound, const std::vector
 
 template <typename T>
 void PSO<T>::setParticles(const std::vector<std::vector<T>> &positions, const std::vector<std::vector<T>> &velocities) {
-    for (int i = 0; i < particles_.size(); ++i) {
+    for (size_t i = 0; i < particles_.size(); ++i) {
         particles_[i].position = positions[i];
         particles_[i].velocity = velocities[i];
     }
@@ -150,16 +150,16 @@ void PSO<T>::updateParticles() {
 template <typename T>
 void PSO<T>::printParticles(int n) {
     if (n > 0) {
-        std::cout << "n: " << n << "  pos[0]:" << particles_[n].position[0];
-        for (int j = 1; j < particles_[n].position.size(); ++j)
-            std::cout << " | " << particles_[n].position[j];
-        std::cout << " best_pos[0]: " << particles_[n].best_position[0];
-        std::cout << "best_score: " << particles_[n].best_score << std::endl;
+        std::cout << "n: " << n << "  pos[0]:" << particles_[static_cast<size_t>(n)].position[0];
+        for (size_t j = 1; j < particles_[static_cast<size_t>(n)].position.size(); ++j)
+            std::cout << " | " << particles_[static_cast<size_t>(n)].position[j];
+        std::cout << " best_pos[0]: " << particles_[static_cast<size_t>(n)].best_position[0];
+        std::cout << "best_score: " << particles_[static_cast<size_t>(n)].best_score << std::endl;
     } else {
-        for (int i = 0; i < particles_.size(); ++i) {
+        for (size_t i = 0; i < particles_.size(); ++i) {
             std::cout << "i:" << i << " pos[0]:" << particles_[i].position[0];
-            for (int j = 1; j < particles_[n].position.size(); ++j)
-                std::cout << " | " << particles_[n].position[j];
+            for (size_t j = 1; j < particles_[i].position.size(); ++j)
+                std::cout << " | " << particles_[i].position[j];
             std::cout << " best_pos[0]: " << particles_[i].best_position[0];
             std::cout << " best_score: " << particles_[i].best_score << std::endl;
         }

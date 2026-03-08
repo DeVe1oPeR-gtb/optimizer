@@ -3,7 +3,7 @@
  * @brief 製品リストをループし、各製品の残差ブロックを連結して 1 本の残差ベクトルを返す。
  */
 
-#include "product/BatchEvaluationHandler.h"
+#include "product/BatchEvaluationHandler.hpp"
 
 namespace optimizer {
 

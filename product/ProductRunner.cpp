@@ -3,7 +3,7 @@
  * @brief 1 製品の評価: データ読込 → モデル実行 → 残差ブロック作成（対象外インデックスは除く）
  */
 
-#include "product/ProductRunner.h"
+#include "product/ProductRunner.hpp"
 
 namespace optimizer {
 

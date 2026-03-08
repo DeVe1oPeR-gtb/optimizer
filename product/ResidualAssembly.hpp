@@ -6,7 +6,7 @@
  * @brief 全製品の残差を 1 本に連結したベクトルと、製品ごとのブロック（offset/size）情報
  */
 
-#include "product/ProductResidualBlock.h"
+#include "product/ProductResidualBlock.hpp"
 #include <vector>
 
 namespace optimizer {

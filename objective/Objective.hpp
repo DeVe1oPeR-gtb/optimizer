@@ -6,9 +6,9 @@
  * @brief 目的関数の実装。mapper で最適化ベクトル→全パラメータ、batch で全製品評価。目的値は残差ノルム。
  */
 
-#include "core/IDifferentiableObjective.h"
-#include "param/ParameterMapper.h"
-#include "product/BatchEvaluationHandler.h"
+#include "core/core.hpp"
+#include "param/param.hpp"
+#include "product/BatchEvaluationHandler.hpp"
 #include <memory>
 
 namespace optimizer {

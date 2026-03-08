@@ -3,21 +3,22 @@
  * @brief 最適化 1 回分の実行窓口。PSO/DE/LM を分岐し、Objective で評価。resultWriter があれば最適化後に結果出力。
  */
 
-#include "util/OptimizerDriver.h"
-#include "model/IPhysicalModel.h"
-#include "model/IProductDataLoader.h"
-#include "product/ProductRunner.h"
-#include "product/ProductLoadedData.h"
-#include "product/ProductRunResult.h"
-#include "util/IResultWriter.h"
-#include "product/BatchEvaluationHandler.h"
-#include "objective/Objective.h"
-#include "core/JacobianResult.h"
-#include "util/TraceConfig.h"
-#include "util/IterationLog.h"
-#include "Optimizer/PSO/PSO.h"
-#include "Optimizer/DE/DE.h"
-#include "Optimizer/LM/LM.h"
+#include "util/OptimizerDriver.hpp"
+#include "model/IPhysicalModel.hpp"
+#include "model/IProductDataLoader.hpp"
+#include "product/ProductRunner.hpp"
+#include "product/ProductLoadedData.hpp"
+#include "product/ProductRunResult.hpp"
+#include "util/IResultWriter.hpp"
+#include "product/BatchEvaluationHandler.hpp"
+#include "objective/Objective.hpp"
+#include "core/core.hpp"
+#include "util/TraceConfig.hpp"
+#include "util/IterationLog.hpp"
+#include "util/LogRotate.hpp"
+#include "Optimizer/PSO/PSO.hpp"
+#include "Optimizer/DE/DE.hpp"
+#include "Optimizer/LM/LM.hpp"
 #include <fstream>
 #include <memory>
 #include <string>
@@ -25,6 +26,60 @@
 #include <cmath>
 
 namespace optimizer {
+
+/** debug=on のとき、オンサイトで必要な入力が揃っているかチェックしログ出力する。 */
+static void checkRequiredInputs(const std::string& configPath,
+                                ParameterMapper& mapper,
+                                const std::vector<ProductMeta>& products,
+                                const std::string& optimizerName) {
+    if (!TraceConfig::isDebugEnabled()) return;
+
+    TraceConfig::logDebug("--- required inputs check ---");
+
+    if (!configPath.empty()) {
+        std::ifstream f(configPath);
+        if (f)
+            TraceConfig::logDebug("config file: OK (" + configPath + ")");
+        else
+            TraceConfig::logDebug("config file: NG (not found: " + configPath + ")");
+    } else {
+        TraceConfig::logDebug("config file: (using RunConfig, no file)");
+    }
+
+    const size_t nSpecs = mapper.specs().size();
+    if (nSpecs > 0)
+        TraceConfig::logDebug("ParameterMapper specs: " + std::to_string(nSpecs) + " params");
+    else
+        TraceConfig::logDebug("ParameterMapper specs: NG (empty)");
+
+    std::string err;
+    if (mapper.validate(err))
+        TraceConfig::logDebug("ParameterMapper validate: OK");
+    else
+        TraceConfig::logDebug("ParameterMapper validate: NG (" + err + ")");
+
+    const size_t nOpt = mapper.numOptParams();
+    const size_t nFull = mapper.numFullParams();
+    TraceConfig::logDebug("ParameterMapper numOptParams=" + std::to_string(nOpt) + " numFullParams=" + std::to_string(nFull));
+
+    std::vector<double> z0 = mapper.getInitialVector(nullptr);
+    if (z0.size() == nFull)
+        TraceConfig::logDebug("initial vector: OK (size=" + std::to_string(z0.size()) + ")");
+    else
+        TraceConfig::logDebug("initial vector: NG (size=" + std::to_string(z0.size()) + " expected " + std::to_string(nFull) + ")");
+
+    if (!products.empty())
+        TraceConfig::logDebug("products: OK (count=" + std::to_string(products.size()) + ")");
+    else
+        TraceConfig::logDebug("products: NG (empty)");
+
+    if (optimizerName == "PSO" || optimizerName == "DE" || optimizerName == "LM")
+        TraceConfig::logDebug("optimizer name: OK (" + optimizerName + ")");
+    else
+        TraceConfig::logDebug("optimizer name: NG (unknown: " + optimizerName + ")");
+
+    TraceConfig::logDebug("--- end check ---");
+}
 
 static std::vector<ProductRunResult> computeProductResults(
     IPhysicalModel& model,
@@ -84,8 +139,8 @@ static RunResult runPSO(Objective& objective,
     std::ofstream traceFile;
     std::ofstream particleTraceFile;
     if (TraceConfig::isTraceEnabled() && !tracePath.empty()) {
-        traceFile.open(tracePath);
-        if (traceFile) {
+        const size_t maxBytes = TraceConfig::getTraceLogMaxBytes();
+        if (openLogWithRotation(tracePath, traceFile, maxBytes)) {
             traceFile << "iteration,score,p0,p1,p2\n";
             pso.setTraceStream(&traceFile);
             pso.setTraceEnabled(true);
@@ -98,8 +153,7 @@ static RunResult runPSO(Objective& objective,
             particleTracePath.insert(particleTracePath.size() - 4, "_particle");
         else
             particleTracePath += "_particle_trace.csv";
-        particleTraceFile.open(particleTracePath);
-        if (particleTraceFile) {
+        if (openLogWithRotation(particleTracePath, particleTraceFile, maxBytes)) {
             particleTraceFile << "iteration,particle_id,score";
             for (size_t d = 0; d < N_DIM; ++d) particleTraceFile << ",p" << d;
             particleTraceFile << "\n";
@@ -152,8 +206,7 @@ static RunResult runDE(Objective& objective,
 
     std::ofstream traceFile;
     if (TraceConfig::isTraceEnabled() && !tracePath.empty()) {
-        traceFile.open(tracePath);
-        if (traceFile) {
+        if (openLogWithRotation(tracePath, traceFile, TraceConfig::getTraceLogMaxBytes())) {
             traceFile << "iteration,score,p0,p1,p2\n";
             de.setTraceStream(&traceFile);
             de.setTraceEnabled(true);
@@ -208,8 +261,7 @@ static RunResult runLM(Objective& objective,
     lm.setLambda(TraceConfig::getLmLambdaInit());
     std::ofstream traceFile;
     if (TraceConfig::isTraceEnabled() && !tracePath.empty()) {
-        traceFile.open(tracePath);
-        if (traceFile) {
+        if (openLogWithRotation(tracePath, traceFile, TraceConfig::getTraceLogMaxBytes())) {
             traceFile << "iteration,rmse,p0,p1,p2\n";
             lm.setTraceStream(&traceFile);
             lm.setTraceEnabled(true);
@@ -232,10 +284,10 @@ static RunResult runLM(Objective& objective,
         for (size_t i = 0; i < nData; ++i)
             eval_data[i] = {measured[i], measured[i] - jr.residuals[i]};
         lm.setEvalData(eval_data);
-        for (int d = 0; d < N_DIM; ++d) {
+        for (size_t d = 0; d < N_DIM; ++d) {
             std::vector<double> col(nData);
             for (size_t i = 0; i < nData; ++i) col[i] = jr.jacobian[i][d];
-            lm.setJacobian(d, col);
+            lm.setJacobian(static_cast<int>(d), col);
         }
         const double current_rmse = lm.getStats().rmse;
         bool accepted = false;
@@ -322,6 +374,8 @@ RunResult OptimizerDriver::run(const std::string& configPath,
                                 const char* logLabel,
                                 IResultWriter* resultWriter) {
     TraceConfig::load(configPath);
+    if (TraceConfig::isDebugEnabled())
+        checkRequiredInputs(configPath, mapper, products, optimizerName);
     return runImpl(mapper, model, loader, products, optimizerName, tracePath, logLabel,
                   TraceConfig::getNIterPso(), TraceConfig::getNIterDe(), TraceConfig::getNIterLm(),
                   resultWriter);
@@ -337,6 +391,8 @@ RunResult OptimizerDriver::run(const RunConfig& config,
                                 const char* logLabel,
                                 IResultWriter* resultWriter) {
     TraceConfig::loadFromStruct(config);
+    if (TraceConfig::isDebugEnabled())
+        checkRequiredInputs("", mapper, products, optimizerName);
     return runImpl(mapper, model, loader, products, optimizerName, tracePath, logLabel,
                   config.n_iter_pso, config.n_iter_de, config.n_iter_lm, resultWriter);
 }

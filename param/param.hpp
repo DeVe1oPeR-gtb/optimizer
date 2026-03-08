@@ -1,12 +1,86 @@
-#ifndef OPTIMIZER_PARAM_PARAMETER_MAPPER_H
-#define OPTIMIZER_PARAM_PARAMETER_MAPPER_H
+#ifndef OPTIMIZER_PARAM_HPP
+#define OPTIMIZER_PARAM_HPP
 
-#include "ParamSpec.h"
-#include <vector>
+/**
+ * @file param.hpp
+ * @brief パラメータ設定とマッパ（ParamSpec, CsvParamLoader, ParameterMapper）
+ */
+
 #include <string>
+#include <vector>
 
 namespace optimizer {
 
+// --- ParamSpec ---
+/**
+ * @brief パラメータの初期値の取り方
+ */
+enum class InitMode {
+    Manual,   /**< init_value のみ使用 */
+    Db,       /**< DB 値（db_key）を使用 */
+    Hybrid    /**< DB にあれば DB 値、なければ init_value */
+};
+
+/**
+ * @brief パラメータ設定の1行分（1パラメータ）
+ */
+struct ParamSpec {
+    std::string param_name;      /**< パラメータ名 */
+    int enable_opt = 0;          /**< 1 のとき最適化ベクトルに含める */
+    InitMode init_mode = InitMode::Manual;
+    double init_value = 0.0;     /**< 初期値（manual 時など） */
+    std::string db_key;          /**< DB 参照キー（db / hybrid 時） */
+    double lower = 0.0;          /**< 下限 */
+    double upper = 0.0;          /**< 上限 */
+    std::string note;            /**< 備考 */
+    bool apply_bounds = true;    /**< 最適化時に上下限を適用するか */
+
+    /** @brief 有効な bounds を持つか（enable 時は別途バリデーション） */
+    bool hasBounds() const {
+        return enable_opt != 0;
+    }
+};
+
+/**
+ * @brief init_mode 文字列を列挙に変換
+ * @param s "manual" / "db" / "hybrid"（大文字可）
+ * @return 対応する InitMode。未対応なら Manual
+ */
+InitMode parseInitMode(const std::string& s);
+
+// --- CsvParamLoader ---
+/**
+ * @brief CSV からパラメータ設定を読み込み・検証する
+ *
+ * CSV: 1行1パラメータ。列は param_name, enable_opt, init_mode, init_value, db_key, lower, upper, apply_bounds, note。
+ */
+class CsvParamLoader {
+public:
+    /**
+     * @brief ファイルから設定を読み込む
+     * @param path CSV ファイルパス
+     * @param[out] errorMessage 失敗時にエラー内容を格納
+     * @return 読み込んだ ParamSpec の列。失敗時は空
+     */
+    std::vector<ParamSpec> load(const std::string& path, std::string& errorMessage);
+
+    /**
+     * @brief 設定リストを検証する
+     * @param specs 検証対象
+     * @param allowedParamNames 許容するパラメータ名の一覧。空なら任意
+     * @param[out] errorMessage 不正時にエラー内容を格納
+     * @return 検証が通れば true
+     */
+    bool validate(const std::vector<ParamSpec>& specs,
+                  const std::vector<std::string>& allowedParamNames,
+                  std::string& errorMessage) const;
+
+private:
+    static std::string trim(const std::string& s);
+    static bool parseRow(const std::string& line, std::vector<std::string>& cells);
+};
+
+// --- ParameterMapper ---
 /**
  * @brief db_key から初期値を返す関数の型
  *
@@ -79,4 +153,4 @@ private:
 
 }  // namespace optimizer
 
-#endif  // OPTIMIZER_PARAM_PARAMETER_MAPPER_H
+#endif  // OPTIMIZER_PARAM_HPP

@@ -1,4 +1,4 @@
-#include "LM/LM.h"
+#include "LM/LM.hpp"
 
 // helper
 template <typename T>

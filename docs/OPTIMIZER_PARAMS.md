@@ -67,6 +67,11 @@
 
 | キー | 意味 | 既定値 |
 |------|------|--------|
+| trace | トレース出力の有無（on/off） | on |
+| **debug** | **デバッグログの有無（on/off）。trace とは別。on のとき run 開始前に必要な入力のチェック結果をログ出力。** | off |
+| optimizer | 実行する最適化器（カンマ区切り） | PSO,DE,LM |
+| lm_apply_bounds | LM でパラメータ上下限を適用するか（on/off） | on |
+| n_iter_pso / n_iter_de / n_iter_lm | 各最適化器の反復数 | 120 / 120 / 80 |
 | **PSO** | | |
 | pso_w | 慣性重み | 0.7 |
 | pso_c1 | パーソナルベスト重み | 1.8 |

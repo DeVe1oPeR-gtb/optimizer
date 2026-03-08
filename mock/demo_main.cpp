@@ -3,16 +3,12 @@
  * OptimizerDriver の利用例: 1 本の ParameterMapper と 3 モデル×最適化器で run を呼ぶだけ。
  */
 
-#include "param/ParameterMapper.h"
-#include "param/ParamSpec.h"
-#include "util/Handler.h"
-#include "util/TraceConfig.h"
-#include "util/DataConfig.h"
-#include "util/CoilList.h"
-#include "util/CoilDataPath.h"
-#include "util/TerminalMessage.h"
-#include "util/OptimizerDriver.h"
-#include "mock/Demo.h"
+#include "param/param.hpp"
+#include "util/util_common.hpp"
+#include "util/TraceConfig.hpp"
+#include "util/LogRotate.hpp"
+#include "util/OptimizerDriver.hpp"
+#include "mock/Demo.hpp"
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -63,8 +59,13 @@ int main() {
     Handler handler(configPath);
     optimizer::DataConfig::load(configPath);
     ensureResultDir();
-    if (optimizer::TraceConfig::isTraceEnabled())
+    if (optimizer::TraceConfig::isTraceEnabled() || optimizer::TraceConfig::isDebugEnabled())
         ensureLogDir();
+    static std::ofstream s_debugLog;
+    if (optimizer::TraceConfig::isDebugEnabled()) {
+        if (optimizer::openLogWithRotation("log/debug.log", s_debugLog, optimizer::TraceConfig::getDebugLogMaxBytes()))
+            optimizer::TraceConfig::setDebugStream(&s_debugLog);
+    }
 
     std::vector<optimizer::CoilEntry> coils;
     const std::string xcoilPath = optimizer::DataConfig::getXcoilFilePath();

@@ -1,7 +1,7 @@
 #ifndef D_LM_H
 #define D_LM_H
 
-#include "Optimizer.h"
+#include "Optimizer.hpp"
 #include <cmath>
 #include <limits>
 #include <numeric>

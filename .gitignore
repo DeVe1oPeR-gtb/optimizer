@@ -2,3 +2,6 @@ build
 build/*
 result/*.csv
 log/
+# 統合ビルド（パス・生成 Makefile はローカルのみ）
+integrate/.onsite_paths
+integrate/Makefile.para
