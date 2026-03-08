@@ -3,7 +3,7 @@
  * @brief ターミナルへのメッセージ出力（info=stdout, error=stderr, summary=見出し+複数行）。
  */
 
-#include "util/TerminalMessage.hpp"
+#include "util/util_common.hpp"
 #include <iostream>
 
 namespace optimizer {

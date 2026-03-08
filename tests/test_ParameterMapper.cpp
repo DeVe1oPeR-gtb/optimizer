@@ -1,7 +1,5 @@
 #include "CppUTest/TestHarness.h"
-#include "param/ParameterMapper.hpp"
-#include "param/CsvParamLoader.hpp"
-#include "param/ParamSpec.hpp"
+#include "param/param.hpp"
 #include <vector>
 
 TEST_GROUP(ParameterMapper) {};

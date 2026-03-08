@@ -3,7 +3,7 @@
  * @brief コイルデータ用設定の読込（xcoil_file, data_path, binary_struct）。para.cfg の key=val を解釈。
  */
 
-#include "util/DataConfig.hpp"
+#include "util/util_common.hpp"
 #include <fstream>
 #include <cctype>
 

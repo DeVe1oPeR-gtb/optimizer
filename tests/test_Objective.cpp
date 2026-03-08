@@ -1,7 +1,6 @@
 #include "CppUTest/TestHarness.h"
 #include "objective/Objective.hpp"
-#include "param/ParameterMapper.hpp"
-#include "param/ParamSpec.hpp"
+#include "param/param.hpp"
 #include "product/BatchEvaluationHandler.hpp"
 #include "product/ProductRunner.hpp"
 #include "product/ProductMeta.hpp"

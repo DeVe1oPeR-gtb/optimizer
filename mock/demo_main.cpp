@@ -3,14 +3,9 @@
  * OptimizerDriver の利用例: 1 本の ParameterMapper と 3 モデル×最適化器で run を呼ぶだけ。
  */
 
-#include "param/ParameterMapper.hpp"
-#include "param/ParamSpec.hpp"
-#include "util/Handler.hpp"
+#include "param/param.hpp"
+#include "util/util_common.hpp"
 #include "util/TraceConfig.hpp"
-#include "util/DataConfig.hpp"
-#include "util/CoilList.hpp"
-#include "util/CoilDataPath.hpp"
-#include "util/TerminalMessage.hpp"
 #include "util/OptimizerDriver.hpp"
 #include "mock/Demo.hpp"
 #include <iostream>

@@ -12,7 +12,7 @@
 #include "util/IResultWriter.hpp"
 #include "product/BatchEvaluationHandler.hpp"
 #include "objective/Objective.hpp"
-#include "core/JacobianResult.hpp"
+#include "core/core.hpp"
 #include "util/TraceConfig.hpp"
 #include "util/IterationLog.hpp"
 #include "Optimizer/PSO/PSO.hpp"

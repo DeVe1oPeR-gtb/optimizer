@@ -3,7 +3,7 @@
  * @brief パラメータ設定のヘルパ（init_mode 文字列のパース）
  */
 
-#include "ParamSpec.hpp"
+#include "param/param.hpp"
 #include <algorithm>
 #include <cctype>
 

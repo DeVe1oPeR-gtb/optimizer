@@ -12,17 +12,14 @@
 
 | 順 | パス | 役割 |
 |---|------|------|
-| 1 | **core/EvalResult.h** | 1 回の評価結果（目的スカラ + 残差ベクトル） |
-| 2 | **core/JacobianResult.h** | 残差 + ヤコビ行列（LM 用） |
-| 3 | **core/IObjective.h** | 目的関数の共通 API：`evaluate(x)` |
-| 4 | **core/IDifferentiableObjective.h** | LM 用：`evaluateWithJacobian(x)` |
-| 5 | **product/ProductMeta.h** | 製品メタ（ID・パス等） |
-| 6 | **product/ProductLoadedData.h** | 1 製品分ロード済みデータ（measured, positions） |
-| 7 | **product/ProductRunResult.h** | 1 製品分の計算結果（実測・予測・残差） |
-| 8 | **product/ProductResidualBlock.h** | 1 製品分の残差ブロック（offset/size + residuals） |
-| 9 | **product/ResidualAssembly.h** | 全製品の連結残差 + ブロック一覧 |
-| 10 | **model/IPhysicalModel.h** | 物理モデル API：`run(fullParams, productLoadedData)` |
-| 11 | **model/IProductDataLoader.h** | 製品データ読込 API：`load(meta)` |
+| 1 | **core/core.hpp** | EvalResult, JacobianResult, IObjective, IDifferentiableObjective（評価結果と目的関数 API） |
+| 2 | **product/ProductMeta.hpp** | 製品メタ（ID・パス等） |
+| 3 | **product/ProductLoadedData.hpp** | 1 製品分ロード済みデータ（measured, positions） |
+| 4 | **product/ProductRunResult.hpp** | 1 製品分の計算結果（実測・予測・残差） |
+| 5 | **product/ProductResidualBlock.hpp** | 1 製品分の残差ブロック（offset/size + residuals） |
+| 6 | **product/ResidualAssembly.hpp** | 全製品の連結残差 + ブロック一覧 |
+| 7 | **model/IPhysicalModel.hpp** | 物理モデル API：`run(fullParams, productLoadedData)` |
+| 8 | **model/IProductDataLoader.hpp** | 製品データ読込 API：`load(meta)` |
 
 **チェック観点（Phase 1）**
 
@@ -38,13 +35,11 @@
 
 | 順 | パス | 役割 |
 |---|------|------|
-| 12 | **param/ParamSpec.h** | 1 パラメータの設定（名前, enable_opt, init, lower/upper, apply_bounds） |
-| 13 | **param/ParamSpec.cpp** | `parseInitMode` 等 |
-| 14 | **param/CsvParamLoader.h**, **.cpp** | CSV から ParamSpec 列を読み込み・検証 |
-| 15 | **param/ParameterMapper.h**, **.cpp** | 最適化ベクトル ⇔ 全パラメータの対応。getInitialVector, getLowerBounds, getUpperBounds, getApplyBounds, expandToFullParameterSet |
-| 16 | **product/ProductRunner.h**, **.cpp** | 1 製品の評価：load → model.run → 残差ブロック作成（measured - predicted） |
-| 17 | **product/BatchEvaluationHandler.h**, **.cpp** | 製品リストをループし、全ブロックを連結して ResidualAssembly を返す |
-| 18 | **objective/Objective.h**, **.cpp** | IObjective 実装。evaluate: expandToFull → batch.evaluate → 目的値は残差のノルム。evaluateWithJacobian: 数値微分 |
+| 9 | **param/param.hpp** | ParamSpec, CsvParamLoader, ParameterMapper（1 パラメータ設定・CSV 読込・最適化ベクトル ⇔ 全パラメータ） |
+| 10 | **param/ParamSpec.cpp**, **CsvParamLoader.cpp**, **ParameterMapper.cpp** | 上記の実装（parseInitMode 等） |
+| 11 | **product/ProductRunner.hpp**, **.cpp** | 1 製品の評価：load → model.run → 残差ブロック作成（measured - predicted） |
+| 12 | **product/BatchEvaluationHandler.hpp**, **.cpp** | 製品リストをループし、全ブロックを連結して ResidualAssembly を返す |
+| 13 | **objective/Objective.hpp**, **.cpp** | IObjective 実装。evaluate: expandToFull → batch.evaluate → 目的値は残差のノルム。evaluateWithJacobian: 数値微分 |
 
 **チェック観点（Phase 2）**
 
@@ -226,26 +221,21 @@ demo_main
 ## 6. ファイル一覧（パスだけ・検索用）
 
 ```
-core/EvalResult.h
-core/JacobianResult.h
-core/IObjective.h
-core/IDifferentiableObjective.h
-model/IPhysicalModel.h
-model/IProductDataLoader.h
-product/ProductMeta.h
-product/ProductLoadedData.h
-product/ProductRunResult.h
-product/ProductResidualBlock.h
-product/ResidualAssembly.h
-product/ProductRunner.h
+core/core.hpp
+model/IPhysicalModel.hpp
+model/IProductDataLoader.hpp
+product/ProductMeta.hpp
+product/ProductLoadedData.hpp
+product/ProductRunResult.hpp
+product/ProductResidualBlock.hpp
+product/ResidualAssembly.hpp
+product/ProductRunner.hpp
 product/ProductRunner.cpp
-product/BatchEvaluationHandler.h
+product/BatchEvaluationHandler.hpp
 product/BatchEvaluationHandler.cpp
-param/ParamSpec.h
+param/param.hpp
 param/ParamSpec.cpp
-param/CsvParamLoader.h
 param/CsvParamLoader.cpp
-param/ParameterMapper.h
 param/ParameterMapper.cpp
 objective/Objective.h
 objective/Objective.cpp

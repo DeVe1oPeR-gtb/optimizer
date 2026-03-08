@@ -6,9 +6,9 @@
  * @brief 最適化 1 回分の実行窓口。run(config, mapper, model, loader, products, optimizerName, ...) で PSO/DE/LM を実行。
  */
 
-#include "param/ParameterMapper.hpp"
+#include "param/param.hpp"
 #include "product/ProductMeta.hpp"
-#include "util/RunConfig.hpp"
+#include "util/util_common.hpp"
 #include <string>
 #include <vector>
 

@@ -3,7 +3,7 @@
  * @brief xcoil.txt から年月日・コイルNO のリストを読み込む。1 行 1 件、カンマまたは空白区切り。
  */
 
-#include "util/CoilList.hpp"
+#include "util/util_common.hpp"
 #include <fstream>
 #include <sstream>
 #include <cctype>
