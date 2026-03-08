@@ -136,6 +136,10 @@ int main() {
 
     Handler handler(configPath);
     optimizer::DataConfig::load(configPath);
+    if (!optimizer::TraceConfig::isOptimizerListValid()) {
+        optimizer::TerminalMessage::error(optimizer::TraceConfig::getOptimizerListError());
+        return 1;
+    }
 
     if (optimizer::TraceConfig::isTraceEnabled() || optimizer::TraceConfig::isDebugEnabled())
         ensureLogDir();
@@ -160,9 +164,7 @@ int main() {
     // 結果をファイル/DB へ出す場合は OnsiteResultWriter を渡す:
     //   OnsiteResultWriter resultWriter;
     //   result = optimizer::OptimizerDriver::run(..., tracePath, "onsite", &resultWriter);
-    const std::string optimizerName = handler.getOptimizersToRun().empty()
-                                          ? "PSO"
-                                          : handler.getOptimizersToRun()[0];
+    const std::string optimizerName = handler.getOptimizersToRun()[0];
     std::string tracePath = optimizer::TraceConfig::isTraceEnabled() ? "log/onsite_trace.csv" : "";
     optimizer::RunResult result = optimizer::OptimizerDriver::run(
         configPath, mapper, model, loader, products, optimizerName,

@@ -58,6 +58,10 @@ int main() {
     const std::string configPath = "config/para.cfg";
     Handler handler(configPath);
     optimizer::DataConfig::load(configPath);
+    if (!optimizer::TraceConfig::isOptimizerListValid()) {
+        optimizer::TerminalMessage::error(optimizer::TraceConfig::getOptimizerListError());
+        return 1;
+    }
     ensureResultDir();
     if (optimizer::TraceConfig::isTraceEnabled() || optimizer::TraceConfig::isDebugEnabled())
         ensureLogDir();

@@ -49,8 +49,12 @@ public:
     /** @brief LM でパラメータ上下限を適用するか（para.cfg の lm_apply_bounds） */
     static bool isLmApplyBoundsEnabled();
 
-    /** @brief 実行する最適化器名のリスト（未指定時は PSO, DE, LM） */
+    /** @brief 実行する最適化器名のリスト。PSO, DE, LM のいずれかまたは ALL_OPT_EXEC（隠し）で全実行。未指定・不正時はエラー。 */
     static const std::vector<std::string>& getOptimizersToRun();
+    /** @brief optimizer= が有効に指定されているか。false のとき getOptimizerListError() で理由を取得。 */
+    static bool isOptimizerListValid();
+    /** @brief 最適化器リストが無効なときのエラー文言（空でなければエラー）。 */
+    static const std::string& getOptimizerListError();
 
     /** @brief トレース出力先（デフォルトは nullptr = 無効）。caller が setTraceStream で設定。 */
     static std::ostream* getTraceStream();
@@ -89,6 +93,8 @@ private:
     static std::ostream* traceStream_;
     static std::ostream* debugStream_;
     static std::vector<std::string> optimizersToRun_;
+    static bool optimizerListValid_;
+    static std::string optimizerListError_;
     static bool lmApplyBoundsEnabled_;
     static int nIterPso_;
     static int nIterDe_;
